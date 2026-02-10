@@ -54,12 +54,14 @@ export class TickService {
 
         // 2. 决策逻辑。
         if (this.currentTick % 24 === 0) {
+          // 身份决策
           await this.decisionService.processIdentityThinking(
             agent,
             this.currentTick,
             systemStats,
           );
         } else {
+          // 普通决策
           await this.decisionService.processRegularThinking(
             agent,
             this.currentTick,
