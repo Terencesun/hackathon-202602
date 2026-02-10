@@ -38,13 +38,13 @@ graph TD
 
 * **测试框架**: Jest\@29 + Supertest\@6.3
 
-## 3. 路由定义
+## 3. 前端路由定义
 
-| 路由                 | 用途                     |
-| ------------------ | ---------------------- |
-| /                  | 登录页，SecondMe OAuth认证   |
-| /agent/:id         | Agent详情页，显示单个Agent详细信息 |
-| /api/auth/callback | OAuth回调处理              |
+| 路由             | 用途                                          |
+| -------------- | ------------------------------------------- |
+| /              | 登录页，SecondMe OAuth认证                        |
+| /dashboard     | 我的分身页，显示当前用户分身的实时状态。包含"排行榜"、"决策日志"、"账单"功能入口 |
+| /auth/callback | OAuth回调处理页，处理授权码并跳转                         |
 
 ## 4. API定义
 
@@ -61,7 +61,29 @@ POST /api/auth/login
 | code  | string | 是    | SecondMe OAuth授权码 |
 | state | string | 是    | OAuth状态参数         |
 
-### 4.3 交易日志API
+### 4.2 当前Agent详情API
+
+```
+GET /api/agent/me
+```
+
+请求参数:
+
+无 (通过Authorization Token获取当前用户身份)
+
+响应:
+
+| 参数名             | 参数类型   | 描述                            |
+| --------------- | ------ | ----------------------------- |
+| id              | string | Agent UUID                    |
+| identity        | string | 当前身份: worker, broker, layflat |
+| current\_income | number | 当前财富值                         |
+| working\_hours  | number | 工作时长                          |
+| current\_tick   | number | 当前Tick数                       |
+| interest\_tags  | array  | 兴趣标签                          |
+| user            | object | 关联的用户基本信息(头像/昵称)              |
+
+### 4.3 交易日志API (账单)
 
 ```
 GET /api/agents/:id/transactions
@@ -99,36 +121,19 @@ GET /api/agents/:id/transactions
 }
 ```
 
-响应:
-
-| 参数名            | 参数类型   | 描述      |
-| -------------- | ------ | ------- |
-| access\_token  | string | JWT访问令牌 |
-| refresh\_token | string | JWT刷新令牌 |
-| user           | object | 用户信息    |
-
-示例:
-
-```json
-{
-  "code": "auth_code_from_secondme",
-  "state": "random_state_string"
-}
-```
-
-### 4.2 Agent管理API
+### 4.4 排行榜API
 
 ```
-GET /api/agents
+GET /api/agents/rank
 ```
 
 请求参数:
 
-| 参数名    | 参数类型   | 是否必需 | 描述                             |
-| ------ | ------ | ---- | ------------------------------ |
-| page   | number | 否    | 页码，默认1                         |
-| limit  | number | 否    | 每页数量，默认20                      |
-| status | string | 否    | 过滤状态: working, broker, layflat |
+| 参数名      | 参数类型   | 是否必需 | 描述                |
+| -------- | ------ | ---- | ----------------- |
+| page     | number | 否    | 页码，默认1            |
+| limit    | number | 否    | 每页数量，默认20         |
+| sort\_by | string | 否    | 排序字段: income (默认) |
 
 响应:
 
@@ -137,6 +142,38 @@ GET /api/agents
 | agents | array  | Agent列表 |
 | total  | number | 总数      |
 | page   | number | 当前页码    |
+
+### 4.5 决策日志API
+
+```
+GET /api/agent/decisions
+```
+
+请求参数:
+
+| 参数名         | 参数类型   | 是否必需 | 描述        |
+| ----------- | ------ | ---- | --------- |
+| limit       | number | 否    | 限制条数，默认20 |
+| start\_tick | number | 否    | 起始Tick    |
+| end\_tick   | number | 否    | 结束Tick    |
+
+响应:
+
+| 参数名  | 参数类型  | 描述     |
+| ---- | ----- | ------ |
+| logs | array | 决策日志列表 |
+
+决策日志对象:
+
+```json
+{
+  "tick_number": 156,
+  "type": "identity_switch",
+  "content": "决定继续当打工仔，因为...",
+  "details": { "old": "worker", "new": "worker" },
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
 
 ```mermaid
 graph TD
