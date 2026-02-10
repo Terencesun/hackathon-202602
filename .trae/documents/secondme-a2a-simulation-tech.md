@@ -86,16 +86,16 @@ GET /api/agent/me
 ### 4.3 交易日志API (账单)
 
 ```
-GET /api/agents/me/transactions
+GET /api/agent/me/transactions
 ```
 
 请求参数:
 
-| 参数名 | 参数类型 | 是否必需 | 描述 |
-| --- | --- | --- | --- |
-| page | number | 否 | 页码，默认1 |
-| limit | number | 否 | 每页数量，默认20 |
-| type | string | 否 | 交易类型：salary, commission, rent等 |
+| 参数名   | 参数类型   | 是否必需 | 描述                             |
+| ----- | ------ | ---- | ------------------------------ |
+| page  | number | 否    | 页码，默认1                         |
+| limit | number | 否    | 每页数量，默认20                      |
+| type  | string | 否    | 交易类型：salary, commission, rent等 |
 
 响应:
 
@@ -122,7 +122,7 @@ GET /api/agents/me/transactions
 ### 4.4 排行榜API
 
 ```
-GET /api/agents/rank
+GET /api/agent/rank
 ```
 
 请求参数:
@@ -135,12 +135,12 @@ GET /api/agents/rank
 
 响应:
 
-| 参数名 | 参数类型 | 描述 |
-| --- | --- | --- |
-| agents | array | Agent列表 |
-| me | object | 当前登录分身的排名信息 |
-| total | number | 总数 |
-| page | number | 当前页码 |
+| 参数名    | 参数类型   | 描述          |
+| ------ | ------ | ----------- |
+| agents | array  | Agent列表     |
+| me     | object | 当前登录分身的排名信息 |
+| total  | number | 总数          |
+| page   | number | 当前页码        |
 
 ### 4.5 决策日志API
 
@@ -150,9 +150,9 @@ GET /api/agent/decisions
 
 请求参数:
 
-| 参数名 | 参数类型 | 是否必需 | 描述 |
-| --- | --- | --- | --- |
-| limit | number | 否 | 限制条数，默认20 |
+| 参数名   | 参数类型   | 是否必需 | 描述        |
+| ----- | ------ | ---- | --------- |
+| limit | number | 否    | 限制条数，默认20 |
 
 响应:
 
