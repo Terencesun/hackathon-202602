@@ -161,6 +161,59 @@ graph TD
     end
 ```
 
+## 5. 核心业务交互时序
+
+```mermaid
+sequenceDiagram
+    participant TS as TickService
+    participant AS as AgentService
+    participant BS as BrokerService
+    participant CS as ChatService
+    participant SM as SecondMeAPI
+    participant TrS as TransactionService
+
+    Note over TS: 系统每分钟触发一次 (Tick Loop)
+
+    TS->>AS: getActiveAgents()
+    AS-->>TS: agents list
+
+    loop 遍历每个 Agent
+        TS->>TrS: deductLivingCosts(agent)
+        TrS-->>TS: 记录生活成本支出
+
+        alt Tick % 24 == 0 (身份思考周期)
+            TS->>CS: processIdentityThinking(agent)
+            CS->>SM: sendChat(Identity Prompt)
+            SM-->>CS: JSON Decision
+            CS->>AS: updateIdentity(new_identity)
+        else Tick % 24 != 0 (普通思考周期)
+            TS->>CS: processRegularThinking(agent)
+            CS->>SM: sendChat(Regular Prompt)
+            SM-->>CS: JSON Decision
+            CS->>AS: updateStatus(continue/change)
+        end
+
+        opt Agent is Broker (中介邀请)
+            TS->>BS: processBrokerInvitations(broker)
+            BS->>AS: getRandomCandidates()
+            AS-->>BS: candidates list
+            
+            loop 遍历候选人
+                BS->>CS: sendInvitationChat(candidate)
+                CS->>SM: sendChat(Invitation Prompt)
+                SM-->>CS: Accept/Reject
+                
+                alt Candidate Accepts
+                    BS->>AS: updateIdentity(Worker)
+                    BS->>TrS: recordCommission(Broker)
+                end
+            end
+        end
+    end
+
+    TS->>TS: updateSystemStats()
+```
+
 ## 6. 数据模型
 
 ### 6.1 数据模型定义
