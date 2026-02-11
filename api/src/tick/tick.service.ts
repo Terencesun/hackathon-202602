@@ -150,6 +150,8 @@ export class TickService {
       successfulDirectInviteeFirstMonthWages: [],
     });
 
+    console.log(incomeItems);
+
     if (brokerBinding) {
       const startTick = brokerBinding.startTick;
       const elapsedTicks =
