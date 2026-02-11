@@ -19,6 +19,53 @@ export async function logout() {
   await authClient.post('/auth/logout');
 }
 
+export type AgentMeResponse = {
+  id: string;
+  identity: string;
+  current_income: number;
+  working_hours: number;
+  current_tick: number;
+  interest_tags: string[];
+  user: {
+    id?: string;
+    avatar?: string;
+    nickname?: string;
+  };
+};
+
+export interface RankUser {
+  name: string;
+  avatar: string;
+  income: number;
+}
+
+export interface MeTransaction {
+  type: string;
+  tick: number;
+  amount: number;
+}
+
+export async function getRank(limit = 50) {
+  const { data } = await apiClient.post<{ list: RankUser[]; myRank?: number }>(
+    '/agent/rank',
+    {},
+    {
+      params: { limit },
+    },
+  );
+  return data;
+}
+
+export async function getMe() {
+  const { data } = await apiClient.post<AgentMeResponse>('/agent/me');
+  return data;
+}
+
+export async function getMeTransactions() {
+  const { data } = await apiClient.post<MeTransaction[]>('/agent/me/transactions');
+  return data;
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {

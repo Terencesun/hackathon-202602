@@ -96,7 +96,6 @@ export class AgentDecisionService {
         await this.agentsService.update(agent.id, {
           identity: newIdentity,
         });
-        // TODO：记录身份历史。
       }
     }
   }

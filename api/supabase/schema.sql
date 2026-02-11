@@ -32,15 +32,7 @@ create table if not exists public.agents (
 
 create index if not exists idx_agents_user_id on public.agents(user_id);
 
-create table if not exists public.identity_history (
-  id uuid primary key default gen_random_uuid(),
-  agent_id uuid not null references public.agents(id) on delete cascade,
-  old_identity text null,
-  new_identity text not null,
-  decision_reason jsonb null,
-  tick_number int not null,
-  created_at timestamptz not null default now()
-);
+
 
 create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),

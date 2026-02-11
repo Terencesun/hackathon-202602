@@ -43,6 +43,24 @@ export class UsersService {
       : null;
   }
 
+  async findIn(ids: string[]): Promise<User[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const res = await this.supabase.from('users').select('*').in('id', ids);
+    throwIfSupabaseError(res.error, 'users.findIn');
+    const rows = (res.data ?? []) as UserRow[];
+    return rows.map((row) => ({
+      id: row.id,
+      secondmeId: row.secondme_id,
+      email: row.email,
+      name: row.name,
+      metadata: row.metadata ?? {},
+      createdAt: row.created_at ? new Date(row.created_at) : null,
+      updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+      agents: [],
+    }));
+  }
+
   async findOne(id: string): Promise<User | null> {
     const res = await this.supabase
       .from('users')

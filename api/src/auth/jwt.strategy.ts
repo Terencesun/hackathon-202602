@@ -6,10 +6,7 @@ import { AuthCookiesService } from './auth.cookies';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    configService: ConfigService,
-    authCookies: AuthCookiesService,
-  ) {
+  constructor(configService: ConfigService, authCookies: AuthCookiesService) {
     const authCookieName = authCookies.getAuthCookieName(
       configService.get<string>('COOKIE_KEY_NAME'),
     );

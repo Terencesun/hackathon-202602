@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Login from '../views/Login.vue';
 import AuthCallback from '../views/AuthCallback.vue';
 import Dashboard from '../views/Dashboard.vue';
-import Rank from '../views/Rank.vue';
 import { useUserStore } from '../stores/user';
 import { hydrateSession } from '../lib/session';
 import { startSessionPolling } from '../lib/sessionPolling';
@@ -11,7 +10,6 @@ const routes = [
   { path: '/', component: Login },
   { path: '/auth/callback', component: AuthCallback },
   { path: '/dashboard', component: Dashboard, meta: { requiresAuth: true } },
-  { path: '/rank', component: Rank, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

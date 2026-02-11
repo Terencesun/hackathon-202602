@@ -1,18 +1,4 @@
-import apiClient from '../api/client';
-
-type AgentMeResponse = {
-  id: string;
-  identity: string;
-  current_income: number;
-  working_hours: number;
-  current_tick: number;
-  interest_tags: string[];
-  user: {
-    id?: string;
-    avatar?: string;
-    nickname?: string;
-  };
-};
+import { getMe } from '../api/client';
 
 let inFlight: Promise<boolean> | null = null;
 
@@ -26,7 +12,7 @@ export async function hydrateSession(userStore: {
 
   inFlight = (async () => {
     try {
-      const { data } = await apiClient.post<AgentMeResponse>('/agent/me');
+      const data = await getMe();
       userStore.setProfile(
         {
           id: data.user?.id,

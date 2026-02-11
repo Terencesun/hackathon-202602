@@ -19,8 +19,8 @@ const handleLogin = () => {
 </script>
 
 <template>
-  <div class="login-shell min-h-screen flex flex-col items-center justify-center p-6">
-    <header class="w-full max-w-2xl text-center mb-8">
+  <div class="login-shell min-h-screen grid grid-cols-1 place-content-center justify-items-center p-6 gap-8">
+    <header class="w-full max-w-2xl text-center">
       <div class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full title-pill">
         <img
           class="pill-logo"

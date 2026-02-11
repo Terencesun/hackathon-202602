@@ -1,8 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { UsersService } from '../users/users.service';
 import { throwIfSupabaseError } from '../supabase/supabase.errors';
 import { SUPABASE_CLIENT } from '../supabase/supabase.constants';
 import { Agent, AgentIdentity } from './agent.entity';
+
+export interface RankUser {
+  name: string;
+  avatar: string;
+  income: number;
+}
+
+export interface MeTransaction {
+  type: string;
+  tick: number;
+  amount: number;
+}
 
 type AgentRow = {
   id: string;
@@ -22,6 +35,7 @@ export class AgentsService {
   constructor(
     @Inject(SUPABASE_CLIENT)
     private readonly supabase: SupabaseClient,
+    private readonly usersService: UsersService,
   ) {}
 
   async findOneByUserId(userId: string): Promise<Agent | null> {
@@ -103,6 +117,61 @@ export class AgentsService {
       createdAt: row.created_at ? new Date(row.created_at) : null,
       updatedAt: row.updated_at ? new Date(row.updated_at) : null,
     };
+  }
+
+  async getRank(
+    userId: string,
+    limit = 10,
+  ): Promise<{ list: RankUser[]; myRank: number }> {
+    const safeLimit =
+      Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 10;
+
+    const res = await this.supabase
+      .from('agents')
+      .select('*')
+      .eq('is_active', true)
+      .order('current_income', { ascending: false })
+      .limit(safeLimit);
+
+    throwIfSupabaseError(res.error, 'agents.getRank');
+    const rows = (res.data ?? []) as AgentRow[];
+
+    const top = rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      currentIncome: Number(row.current_income ?? 0),
+    }));
+
+    let list: RankUser[] = [];
+    if (top.length > 0) {
+      const userIds = top.map((agent) => agent.userId);
+      const users = await this.usersService.findIn(userIds);
+
+      list = top.map((agent) => {
+        const user = users.find((u) => u.id === agent.userId);
+        return {
+          name: user?.name || '',
+          avatar: user?.metadata?.avatar || '',
+          income: agent.currentIncome,
+        };
+      });
+    }
+
+    let myRank = 0;
+    const agent = await this.findOneByUserId(userId);
+    if (agent) {
+      const rankRes = await this.supabase
+        .from('agents')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .gt('current_income', agent.currentIncome);
+
+      if (!rankRes.error) {
+        myRank = (rankRes.count ?? 0) + 1;
+      }
+    }
+
+    return { list, myRank };
   }
 
   async getActiveAgents(): Promise<Agent[]> {
@@ -189,5 +258,28 @@ export class AgentsService {
           updatedAt: row.updated_at ? new Date(row.updated_at) : null,
         }
       : null;
+  }
+
+  async getMeTransactions(agentId: string): Promise<MeTransaction[]> {
+    const res = await this.supabase
+      .from('transactions')
+      .select('reason, tick_number, amount, created_at')
+      .eq('agent_id', agentId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    throwIfSupabaseError(res.error, 'agents.getMeTransactions');
+
+    const rows = (res.data ?? []) as {
+      reason: string | null;
+      tick_number: number;
+      amount: number;
+    }[];
+
+    return rows.map((row) => ({
+      type: row.reason || '',
+      tick: Number(row.tick_number),
+      amount: Number(row.amount),
+    }));
   }
 }

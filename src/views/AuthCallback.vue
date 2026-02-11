@@ -49,7 +49,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="login-shell min-h-screen flex items-center justify-center p-6">
+  <div class="login-shell min-h-screen grid place-items-center p-6">
     <div class="callback-card text-center">
       <el-icon class="is-loading text-4xl mb-4 callback-icon">
         <Loading />

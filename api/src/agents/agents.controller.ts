@@ -1,6 +1,5 @@
 import {
   Controller,
-  Get,
   Post,
   Query,
   Req,
@@ -18,20 +17,11 @@ export class AgentController {
     private readonly usersService: UsersService,
   ) {}
 
-  @Get('rank')
-  // @UseGuards(AuthGuard('jwt')) // 公开还是需要鉴权？PRD 说玩家可查看。
-  async getRank(@Query('limit') limit = 50) {
-    const agents = await this.agentsService.getActiveAgents();
-    // 按收入降序排序。
-    const sorted = agents.sort(
-      (a, b) => Number(b.currentIncome) - Number(a.currentIncome),
-    );
-    const top = sorted.slice(0, limit);
-
-    return {
-      agents: top,
-      total: agents.length,
-    };
+  @Post('rank')
+  @UseGuards(AuthGuard('jwt'))
+  async getRank(@Query('limit') limit = 10, @Req() req: any) {
+    const userId = req?.user?.userId;
+    return this.agentsService.getRank(userId, limit);
   }
 
   @Post('me')
@@ -67,5 +57,20 @@ export class AgentController {
         avatar,
       },
     };
+  }
+
+  @Post('me/transactions')
+  @UseGuards(AuthGuard('jwt'))
+  async getMeTransactions(@Req() req: any) {
+    const userId = req?.user?.userId;
+    if (!userId || typeof userId !== 'string')
+      throw new UnauthorizedException('Invalid token');
+
+    const agent = await this.agentsService.findOneByUserId(userId);
+    if (!agent) {
+      return [];
+    }
+
+    return this.agentsService.getMeTransactions(agent.id);
   }
 }
