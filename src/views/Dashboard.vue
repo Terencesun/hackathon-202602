@@ -12,7 +12,7 @@ async function handleCommand(command: string) {
 
   try {
     await logout();
-  } catch {}
+  } catch { void 0 }
 
   userStore.clearSession();
   if (window.location.pathname !== '/') {
@@ -51,7 +51,10 @@ const identityIcon = computed(() => {
       <h1 class="font-bold text-xl font-mono">
         My Agent
       </h1>
-      <el-dropdown trigger="click" @command="handleCommand">
+      <el-dropdown
+        trigger="click"
+        @command="handleCommand"
+      >
         <div class="flex items-center gap-4 cursor-pointer select-none">
           <span class="text-sm text-text-secondary">{{ userStore.user?.name }}</span>
           <el-avatar
@@ -63,7 +66,9 @@ const identityIcon = computed(() => {
         </div>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+            <el-dropdown-item command="logout">
+              退出登录
+            </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>

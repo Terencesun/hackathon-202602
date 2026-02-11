@@ -54,8 +54,12 @@ onMounted(async () => {
       <el-icon class="is-loading text-4xl mb-4 callback-icon">
         <Loading />
       </el-icon>
-      <p class="callback-title">正在验证身份…</p>
-      <p class="callback-subtitle mt-2">请稍候，马上进入冒险</p>
+      <p class="callback-title">
+        正在验证身份…
+      </p>
+      <p class="callback-subtitle mt-2">
+        请稍候，马上进入冒险
+      </p>
     </div>
   </div>
 </template>

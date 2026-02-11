@@ -162,7 +162,9 @@ export class TickService {
         elapsedTicks >= 0 &&
         elapsedTicks < this.brokerBindingCommissionTicks
       ) {
-        const wage = incomeItems.find((i) => i.type === 'worker_income')?.amount;
+        const wage = incomeItems.find(
+          (i) => i.type === 'worker_income',
+        )?.amount;
         const safeWage = Number.isFinite(wage) ? Number(wage) : 0;
         const commission = Number(
           (Math.max(0, safeWage) * this.brokerBindingCommissionRate).toFixed(2),

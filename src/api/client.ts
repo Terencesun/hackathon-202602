@@ -36,7 +36,7 @@ apiClient.interceptors.response.use(
       (config as any).__handledAuthFailure = true;
       try {
         await logout();
-      } catch {}
+      } catch { void 0 }
 
       const userStore = useUserStore();
       userStore.clearSession();

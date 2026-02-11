@@ -3,9 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "license": "MIT",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "installpkg": "pnpm -C . install && pnpm -C ./api install",
     "build": "vue-tsc -b && npm run --prefix ./api build && vite build",
+    "postbuild": "node scripts/postbuild.mjs",
     "check": "vue-tsc -b",
     "lint": "eslint . --ext .ts,.vue",
     "lint:fix": "eslint . --ext .ts,.vue --fix"
