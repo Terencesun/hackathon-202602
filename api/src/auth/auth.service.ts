@@ -36,7 +36,6 @@ export class AuthService {
       }
 
       const userInfo = await this.secondmeService.userInfo(accessToken);
-      console.log(userInfo);
 
       if (!userInfo?.userId) {
         throw new Error('User info not returned');

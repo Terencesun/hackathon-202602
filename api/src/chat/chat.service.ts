@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { AgentsService } from '../agents/agents.service';
 import { UsersService } from '../users/users.service';
 import { SecondmeService } from '../secondme/secondme.service';
+import { AgentIdentity } from '../agents/agent.entity';
 
 export type DecisionResult = {
-  continue?: boolean;
-  next_identity?: 'worker' | 'broker' | 'layflat';
+  next_identity?: AgentIdentity;
   accept?: boolean;
   reason?: string;
   error?: string;
@@ -78,18 +78,9 @@ export class ChatService {
     if (content.includes('决定是否继续当前身份')) {
       return [
         '仅输出合法 JSON 对象，不要解释，不要输出 Markdown 或代码块。',
-        '输出结构示例：{"continue": boolean, "reason": string}。',
-        '规则：根据用户状态判断是否继续当前身份；信息不足时 continue=false。',
-        'reason 给出一句话原因。',
-      ].join('\n');
-    }
-
-    if (content.includes('选择未来24tick身份')) {
-      return [
-        '仅输出合法 JSON 对象，不要解释，不要输出 Markdown 或代码块。',
-        '输出结构示例：{"next_identity": string, "reason": string}。',
-        '规则：next_identity 必须且只能是以下之一：worker、broker、layflat。',
-        '信息不足或无法判断时，next_identity=layflat。',
+        '输出结构示例：{"next_identity": string,"reason": string}。',
+        '规则：',
+        'next_identity 可选值：worker、broker、layflat。',
         'reason 给出一句话原因。',
       ].join('\n');
     }
@@ -118,13 +109,11 @@ export class ChatService {
     try {
       const obj = JSON.parse(jsonText) as Record<string, unknown>;
       const result: DecisionResult = {};
-      if (typeof obj.continue === 'boolean') result.continue = obj.continue;
       if (typeof obj.accept === 'boolean') result.accept = obj.accept;
       if (typeof obj.reason === 'string') result.reason = obj.reason;
       if (typeof obj.error === 'string') result.error = obj.error;
       if (typeof obj.next_identity === 'string')
-        result.next_identity =
-          obj.next_identity as DecisionResult['next_identity'];
+        result.next_identity = obj.next_identity as AgentIdentity;
       return Object.keys(result).length
         ? result
         : { error: 'Empty DecisionResult' };

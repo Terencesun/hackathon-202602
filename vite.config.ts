@@ -6,7 +6,6 @@ import path from 'path'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const apiPort = env.PORT ?? '3000'
-  console.log(apiPort);
   
   return {
     plugins: [vue()],

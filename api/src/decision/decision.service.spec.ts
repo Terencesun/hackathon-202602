@@ -4,8 +4,7 @@ import { Agent, AgentIdentity } from '../agents/agent.entity';
 import { ChatService } from '../chat/chat.service';
 import type { DecisionResult } from '../chat/chat.service';
 import { AgentsService } from '../agents/agents.service';
-import { EconomyService } from '../economy/economy.service';
-import type { SystemStats } from '../economy/economy.service';
+import { EconomyService, type SystemStats } from '../economy/economy.service';
 import { BrokerBindingsService } from '../broker-bindings/broker-bindings.service';
 
 describe('AgentDecisionService', () => {
@@ -138,60 +137,6 @@ describe('AgentDecisionService', () => {
   });
 
   describe('processRegularThinking', () => {
-    it('模型明确不继续当前身份时，非躺平身份会切换为躺平', async () => {
-      const agent = makeAgent({
-        identity: AgentIdentity.WORKER,
-        currentIncome: 10,
-        workingHours: 3,
-        interestTags: ['效率', '赚钱'],
-      });
-      chatService.sendChat.mockResolvedValueOnce({
-        continue: false,
-        reason: '想休息',
-      });
-
-      await svc.processRegularThinking(agent, 7);
-
-      expect(chatService.sendChat).toHaveBeenCalledTimes(1);
-      expect(chatService.sendChat.mock.calls[0][0]).toBe(agent.id);
-      expect(chatService.sendChat.mock.calls[0][1]).toContain(
-        '决定是否继续当前身份',
-      );
-
-      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
-        identity: AgentIdentity.LAYFLAT,
-      });
-    });
-
-    it('模型明确不继续当前身份时，已是躺平则不重复更新', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.LAYFLAT });
-      chatService.sendChat.mockResolvedValueOnce({ continue: false });
-
-      await svc.processRegularThinking(agent, 1);
-
-      expect(agentsService.update).not.toHaveBeenCalled();
-    });
-
-    it('模型继续当前身份时不发生身份切换', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.WORKER });
-      chatService.sendChat.mockResolvedValueOnce({ continue: true });
-
-      await svc.processRegularThinking(agent, 1);
-
-      expect(agentsService.update).not.toHaveBeenCalled();
-    });
-
-    it('模型未返回 continue 字段时不发生身份切换', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.WORKER });
-      chatService.sendChat.mockResolvedValueOnce({});
-
-      await svc.processRegularThinking(agent, 1);
-
-      expect(agentsService.update).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('processIdentityThinking', () => {
     const systemStats: SystemStats = {
       total_agents: 10,
       worker_ratio: 0.4,
@@ -199,78 +144,51 @@ describe('AgentDecisionService', () => {
       layflat_ratio: 0.4,
     };
 
-    it('模型选择 worker 时身份切换为工人', async () => {
+    it('模型返回不同的 next_identity 时，更新身份', async () => {
       const agent = makeAgent({
-        identity: AgentIdentity.LAYFLAT,
-        currentIncome: 12,
+        identity: AgentIdentity.WORKER,
+        currentIncome: 10,
+        workingHours: 3,
+        interestTags: ['效率', '赚钱'],
       });
       chatService.sendChat.mockResolvedValueOnce({
-        next_identity: 'worker',
-        reason: '去上班',
+        next_identity: AgentIdentity.LAYFLAT,
+        reason: '想休息',
       });
 
-      await svc.processIdentityThinking(agent, 8, systemStats);
+      await svc.processRegularThinking(agent, systemStats);
 
       expect(chatService.sendChat).toHaveBeenCalledTimes(1);
       expect(chatService.sendChat.mock.calls[0][0]).toBe(agent.id);
       expect(chatService.sendChat.mock.calls[0][1]).toContain(
-        '选择未来24tick身份',
+        '决定是否继续当前身份',
       );
-      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
-        identity: AgentIdentity.WORKER,
-      });
-    });
+      expect(chatService.sendChat.mock.calls[0][1]).toContain(
+        `总Agent数${systemStats.total_agents}`,
+      );
 
-    it('模型选择 broker 时身份切换为中介', async () => {
-      const agent = makeAgent({
-        identity: AgentIdentity.WORKER,
-        currentIncome: 12,
-      });
-      chatService.sendChat.mockResolvedValueOnce({
-        next_identity: 'broker',
-        reason: '去撮合',
-      });
-
-      await svc.processIdentityThinking(agent, 8, systemStats);
-
-      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
-        identity: AgentIdentity.BROKER,
-      });
-    });
-
-    it('模型选择 layflat 或未知值时身份切换为躺平', async () => {
-      const agent = makeAgent({
-        identity: AgentIdentity.WORKER,
-        currentIncome: 12,
-      });
-      chatService.sendChat.mockResolvedValueOnce({
-        next_identity: 'layflat',
-        reason: '休息',
-      });
-      await svc.processIdentityThinking(agent, 8, systemStats);
-      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
-        identity: AgentIdentity.LAYFLAT,
-      });
-
-      agentsService.update.mockClear();
-      chatService.sendChat.mockResolvedValueOnce({
-        next_identity: 'unknown' as any,
-        reason: '信息不足',
-      });
-      await svc.processIdentityThinking(agent, 8, systemStats);
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
         identity: AgentIdentity.LAYFLAT,
       });
     });
 
-    it('模型未返回 next_identity 时不发生身份切换', async () => {
-      const agent = makeAgent({
-        identity: AgentIdentity.WORKER,
-        currentIncome: 12,
+    it('模型返回相同的 next_identity 时，不更新身份', async () => {
+      const agent = makeAgent({ identity: AgentIdentity.WORKER });
+      chatService.sendChat.mockResolvedValueOnce({
+        next_identity: AgentIdentity.WORKER,
+        reason: '继续工作',
       });
-      chatService.sendChat.mockResolvedValueOnce({ reason: '没有明确选择' });
 
-      await svc.processIdentityThinking(agent, 8, systemStats);
+      await svc.processRegularThinking(agent, systemStats);
+
+      expect(agentsService.update).not.toHaveBeenCalled();
+    });
+
+    it('模型未返回 next_identity 时，不更新身份', async () => {
+      const agent = makeAgent({ identity: AgentIdentity.WORKER });
+      chatService.sendChat.mockResolvedValueOnce({ reason: '不知道' });
+
+      await svc.processRegularThinking(agent, systemStats);
 
       expect(agentsService.update).not.toHaveBeenCalled();
     });

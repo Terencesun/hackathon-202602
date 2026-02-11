@@ -113,7 +113,6 @@ export class TickService {
     systemStats: SystemStats,
   ): Promise<void> {
     const oldRole = agent.identity;
-
     const costs = this.economyService.getLivingCosts(agent.identity);
     for (const [type, amount] of Object.entries(costs)) {
       await this.transactionsService.createTransaction(
@@ -203,18 +202,7 @@ export class TickService {
       await this.decisionService.processInviteBind(agent, this.currentTick);
     }
 
-    if (this.currentTick % 24 === 0) {
-      await this.decisionService.processIdentityThinking(
-        agent,
-        this.currentTick,
-        systemStats,
-      );
-    } else {
-      await this.decisionService.processRegularThinking(
-        agent,
-        this.currentTick,
-      );
-    }
+    await this.decisionService.processRegularThinking(agent, systemStats);
 
     const latestAgent = await this.agentsService.findOne(agent.id);
     if (latestAgent && latestAgent.identity) {

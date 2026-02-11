@@ -23,7 +23,6 @@ describe('TickService', () => {
   };
   const decisionService = {
     processInviteBind: jest.fn(),
-    processIdentityThinking: jest.fn(),
     processRegularThinking: jest.fn(),
     processRoleChange: jest.fn(),
   };
@@ -69,7 +68,6 @@ describe('TickService', () => {
     transactionsService.createTransaction.mockResolvedValue({} as any);
     agentsService.update.mockResolvedValue({} as any);
     decisionService.processInviteBind.mockResolvedValue(undefined);
-    decisionService.processIdentityThinking.mockResolvedValue(undefined);
     decisionService.processRegularThinking.mockResolvedValue(undefined);
     decisionService.processRoleChange.mockResolvedValue(undefined);
     incomeService.applyIncom.mockReturnValue([]);
@@ -99,7 +97,7 @@ describe('TickService', () => {
 
   describe('processTickHandle', () => {
     it('会扣除生活成本、写入收益、做决策、处理角色变更，并更新 agent tick', async () => {
-      (svc as any).currentTick = 24;
+      (svc as any).currentTick = 100;
       const agent = makeAgent({
         id: 'a1',
         identity: AgentIdentity.WORKER,
@@ -125,7 +123,7 @@ describe('TickService', () => {
           totalAgents: 10,
           currentWorkers: 4,
           workHours: 6,
-          currentTick: 24,
+          currentTick: 100,
         }),
       );
 
@@ -136,7 +134,7 @@ describe('TickService', () => {
         'rent_cost',
         -0.8,
         '生活成本',
-        24,
+        100,
       );
       expect(transactionsService.createTransaction).toHaveBeenNthCalledWith(
         2,
@@ -144,7 +142,7 @@ describe('TickService', () => {
         'food_cost',
         -1.2,
         '生活成本',
-        24,
+        100,
       );
       expect(transactionsService.createTransaction).toHaveBeenNthCalledWith(
         3,
@@ -152,15 +150,13 @@ describe('TickService', () => {
         'worker_income',
         200,
         '工资收入',
-        24,
+        100,
       );
 
-      expect(decisionService.processIdentityThinking).toHaveBeenCalledWith(
+      expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
-        24,
         systemStats,
       );
-      expect(decisionService.processRegularThinking).not.toHaveBeenCalled();
 
       expect(decisionService.processRoleChange).toHaveBeenCalledWith(
         agent.id,
@@ -168,13 +164,13 @@ describe('TickService', () => {
         AgentIdentity.BROKER,
       );
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
-        currentTick: 24,
+        currentTick: 100,
       });
 
       const transactionOrders =
         transactionsService.createTransaction.mock.invocationCallOrder;
       const thinkingOrder =
-        decisionService.processIdentityThinking.mock.invocationCallOrder[0];
+        decisionService.processRegularThinking.mock.invocationCallOrder[0];
       const findOneOrder = agentsService.findOne.mock.invocationCallOrder[0];
       const updateOrder = agentsService.update.mock.invocationCallOrder[0];
 
@@ -203,9 +199,8 @@ describe('TickService', () => {
 
       expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
-        7,
+        systemStats,
       );
-      expect(decisionService.processIdentityThinking).not.toHaveBeenCalled();
       expect(transactionsService.createTransaction).toHaveBeenCalledTimes(1);
       expect(transactionsService.createTransaction).toHaveBeenCalledWith(
         agent.id,
@@ -229,7 +224,7 @@ describe('TickService', () => {
       expect(decisionService.processInviteBind).toHaveBeenCalledWith(agent, 1);
       expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
-        1,
+        systemStats,
       );
 
       const inviteOrder =
@@ -255,8 +250,8 @@ describe('TickService', () => {
   });
 
   describe('processTick', () => {
-    it('tick 为 24 的倍数时走身份决策，并在最后更新 agent tick', async () => {
-      jest.spyOn(svc, 'incTick').mockResolvedValue(24);
+    it('tick 为 24 的倍数时走普通决策，并在最后更新 agent tick', async () => {
+      jest.spyOn(svc, 'incTick').mockResolvedValue(100);
       const agent = makeAgent({ id: 'a1', identity: AgentIdentity.WORKER });
       agentsService.getActiveAgents.mockResolvedValue([agent]);
       agentsService.findOne.mockResolvedValue(
@@ -269,7 +264,7 @@ describe('TickService', () => {
 
       await svc.processTick();
 
-      expect((svc as any).currentTick).toBe(24);
+      expect((svc as any).currentTick).toBe(100);
       expect(agentsService.getActiveAgents).toHaveBeenCalledTimes(1);
       expect(economyService.getSystemStats).toHaveBeenCalledTimes(1);
       expect(economyService.getLivingCosts).toHaveBeenCalledWith(
@@ -281,7 +276,7 @@ describe('TickService', () => {
           totalAgents: 1,
           currentWorkers: 1,
           workHours: agent.workingHours,
-          currentTick: 24,
+          currentTick: 100,
         }),
       );
 
@@ -292,7 +287,7 @@ describe('TickService', () => {
         'rent_cost',
         -0.8,
         '生活成本',
-        24,
+        100,
       );
       expect(transactionsService.createTransaction).toHaveBeenNthCalledWith(
         2,
@@ -300,7 +295,7 @@ describe('TickService', () => {
         'food_cost',
         -1.2,
         '生活成本',
-        24,
+        100,
       );
       expect(transactionsService.createTransaction).toHaveBeenNthCalledWith(
         3,
@@ -308,15 +303,13 @@ describe('TickService', () => {
         'worker_income',
         200,
         '工资收入',
-        24,
+        100,
       );
 
-      expect(decisionService.processIdentityThinking).toHaveBeenCalledWith(
+      expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
-        24,
         systemStats,
       );
-      expect(decisionService.processRegularThinking).not.toHaveBeenCalled();
 
       expect(agentsService.findOne).toHaveBeenCalledWith(agent.id);
       expect(decisionService.processRoleChange).toHaveBeenCalledWith(
@@ -325,13 +318,13 @@ describe('TickService', () => {
         AgentIdentity.WORKER,
       );
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
-        currentTick: 24,
+        currentTick: 100,
       });
 
       const transactionOrders =
         transactionsService.createTransaction.mock.invocationCallOrder;
       const thinkingOrder =
-        decisionService.processIdentityThinking.mock.invocationCallOrder[0];
+        decisionService.processRegularThinking.mock.invocationCallOrder[0];
       const findOneOrder = agentsService.findOne.mock.invocationCallOrder[0];
       const updateOrder = agentsService.update.mock.invocationCallOrder[0];
 
@@ -353,9 +346,8 @@ describe('TickService', () => {
 
       expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
-        7,
+        systemStats,
       );
-      expect(decisionService.processIdentityThinking).not.toHaveBeenCalled();
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
         currentTick: 7,
       });
@@ -375,7 +367,7 @@ describe('TickService', () => {
       expect(decisionService.processInviteBind).toHaveBeenCalledWith(agent, 1);
       expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
-        1,
+        systemStats,
       );
 
       const inviteOrder =

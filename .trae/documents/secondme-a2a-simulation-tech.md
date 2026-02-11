@@ -27,19 +27,30 @@ graph TD
 ## 2. 技术描述
 
 * **项目结构**: Monorepo 架构
+
   * 前端: 根目录 (Vue3 + Vite)
+
   * 后端: `/api` 目录 (NestJS)
 
-* **前端**: Vue 3 + TypeScript + Vite @5.0
-  * UI框架: Element Plus @2.13
-  * 样式: TailwindCSS @3.4 + Sass
-  * 状态管理: Pinia @3.0
+* **前端**: Vue 3 (^3.4.15) + Vite (^5.0.12)
+
+  * UI框架: Element Plus (^2.13.2)
+
+  * 样式: TailwindCSS (^3.4.1) + Sass
+
+  * 状态管理: Pinia (^3.0.4)
+
   * 图标库: Lucide Vue Next
 
-* **后端**: NestJS @10 + TypeScript
+* **后端**: NestJS (v11) + TypeScript
+
   * 调度任务: @nestjs/schedule (Cron)
-  * 数据库客户端: @supabase/supabase-js
+
+  * 数据库客户端: @supabase/supabase-js (^2.95.3)
+
   * 响应式编程: RxJS (用于并发处理)
+
+  * 认证: Passport, JWT
 
 * **数据库**: Supabase (PostgreSQL)
 
@@ -55,10 +66,10 @@ graph TD
 
 ## 4. API定义
 
-### 4.1 认证相关API
+### 4.1 认证相关API (AuthController)
 
 ```
-POST /api/auth/login
+POST /auth/login
 ```
 
 请求:
@@ -68,36 +79,45 @@ POST /api/auth/login
 | code  | string | 是    | SecondMe OAuth授权码 |
 | state | string | 是    | OAuth状态参数         |
 
+```
+POST /auth/logout
+```
+
+清除登录状态。
+
 ### 4.2 Agent相关API (AgentsController)
 
 ```
-GET /api/agents/me
+POST /agent/me
 ```
 
 获取当前登录用户的Agent详情。
 
 ```
-GET /api/agents/active
+POST /agent/rank
 ```
 
-获取所有活跃Agent列表。
+获取Agent排行榜（支持分页）。
 
-### 4.3 交易日志API (TransactionsController)
+### 4.3 交易日志API (AgentsController)
 
 ```
-GET /api/transactions/me
+POST /agent/me/transactions
 ```
+
+获取当前Agent的交易/流水记录。
 
 请求参数:
 
-| 参数名   | 参数类型   | 是否必需 | 描述                             |
-| ----- | ------ | ---- | ------------------------------ |
-| page  | number | 否    | 页码，默认1                         |
-| limit | number | 否    | 每页数量，默认20                      |
+| 参数名   | 参数类型   | 是否必需 | 描述        |
+| ----- | ------ | ---- | --------- |
+| page  | number | 否    | 页码，默认1    |
+| limit | number | 否    | 每页数量，默认20 |
 
 ### 4.4 系统与决策API
 
 * **决策服务**: `DecisionService` 处理Agent的思考与身份转换。
+
 * **聊天服务**: `ChatService` 负责与SecondMe API交互。
 
 ```mermaid
@@ -160,12 +180,8 @@ sequenceDiagram
             TS->>DS: processInviteBind() (中介拉人)
         end
 
-        alt Tick % 24 == 0 (身份思考周期)
-            TS->>DS: processIdentityThinking()
-            DS->>DS: Call SecondMe API
-        else Tick % 24 != 0 (普通思考周期)
-            TS->>DS: processRegularThinking()
-        end
+        TS->>DS: processRegularThinking()
+        DS->>DS: Call SecondMe API (Thinking)
         
         TS->>AS: update(currentTick)
     end
@@ -178,7 +194,6 @@ sequenceDiagram
 ```mermaid
 erDiagram
     USERS ||--o{ AGENTS : controls
-    AGENTS ||--o{ IDENTITY_HISTORY : has
     AGENTS ||--o{ TRANSACTIONS : has
     AGENTS ||--o{ BROKER_WORKER_BINDINGS : linked
     
@@ -214,13 +229,14 @@ erDiagram
         uuid broker_agent_id FK
         uuid worker_agent_id FK
         integer start_tick
+        string decision_reason
         boolean is_active
     }
 ```
 
 ### 6.2 关键表结构
 
-**BrokerWorkerBinding表 (broker_worker_bindings)**
+**BrokerWorkerBinding表 (broker\_worker\_bindings)**
 
 用于记录中介与工人的绑定关系，确立佣金流向。
 
@@ -230,6 +246,7 @@ CREATE TABLE broker_worker_bindings (
     broker_agent_id UUID REFERENCES agents(id),
     worker_agent_id UUID REFERENCES agents(id),
     start_tick INTEGER,
+    decision_reason TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -250,15 +267,25 @@ CREATE TABLE system (
 ### 7.1 核心模块 (Modules)
 
 * **AppModule**: 根模块。
+
 * **AuthModule**: 处理认证 (AuthService, AuthController)。
+
 * **AgentsModule**: Agent管理 (AgentsService, AgentsController)。
+
 * **TickModule**: 时间循环核心 (TickService)。
+
 * **EconomyModule**: 经济模型 (EconomyService, IncomeService)。
+
 * **DecisionModule**: AI决策 (DecisionService)。
+
 * **TransactionsModule**: 交易流水 (TransactionsService)。
+
 * **BrokerBindingsModule**: 中介绑定关系 (BrokerBindingsService)。
+
 * **ChatModule**: 聊天功能 (ChatService)。
+
 * **SecondmeModule**: SecondMe API集成 (SecondmeService)。
+
 * **SupabaseModule**: 数据库客户端封装。
 
 ## 8. 关键服务实现
@@ -267,6 +294,7 @@ CREATE TABLE system (
 
 核心驱动引擎，使用 `@Cron(CronExpression.EVERY_MINUTE)` 触发。
 主要职责：
+
 1. 维护系统Tick自增。
 2. 并发处理所有活跃Agent的生命周期。
 3. 调用 `IncomeService` 计算收入。
@@ -276,13 +304,15 @@ CREATE TABLE system (
 ### 8.2 收入服务 (IncomeService)
 
 封装经济策略：
+
 * **工厂工资**: 基于 `calcWageMultiplier` (1 + (最佳 - 当前)/最佳) 动态计算。
-* **中介佣金**: 基于 `classifyLaborMarket` (供需比) 确定佣金率 (虽目前TickService中使用固定10%进行转账，但策略层已支持动态)。
+
+* **中介佣金**: 基于 `classifyLaborMarket` (供需比) 确定佣金率。
 
 ### 8.3 决策服务 (DecisionService)
 
-* **processIdentityThinking**: 每24 Tick触发，通过SecondMe Chat API询问Agent是否切换身份。
-* **processRegularThinking**: 非身份切换周期触发，更新Agent状态感受。
+* **processRegularThinking**: 每个Tick触发，通过SecondMe Chat API询问Agent是否切换身份。
+
 * **processInviteBind**: 中介身份触发，尝试邀请Layflat身份Agent成为Worker。
 
 ## 9. 部署配置
@@ -292,17 +322,17 @@ CREATE TABLE system (
 ```bash
 # Supabase
 SUPABASE_URL=...
-SUPABASE_KEY=...
+SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 
 # SecondMe
 SECONDME_CLIENT_ID=...
 SECONDME_CLIENT_SECRET=...
-SECONDME_REDIRECT_URI=...
+SECONDME_API_URL=...
 
 # App
 TICK_CONCURRENCY=4 # Tick处理并发数
+JWT_SECRET=...
 ```
 
-### 9.2 Vercel配置
-
-`vercel.json` 配置了路由重写，将 `/api/*` 转发至 NestJS 后端，其余请求服务于前端静态资源。
+##

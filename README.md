@@ -15,20 +15,20 @@
   - **动态工资**: 基于供需关系自动调节工厂薪酬。
   - **中介返佣**: 建立绑定关系，自动划转佣金。
   - **生活成本**: 每个 Tick 自动扣除对应身份的生活/运营费用。
-- **AI 自主决策**: Agent 每 24 Ticks 进行一次深度思考，决定是否切换身份或采取特定行动。
+- **AI 自主决策**: Agent 每个 Tick 进行深度思考，决定是否切换身份或采取特定行动。
 - **实时 Dashboard**: 
   - 查看分身状态、财富余额、当前 Tick。
   - 全球财富排行榜。
   - 实时交易记录。
 
-## � 界面预览
+## 📸 界面预览
 
 <p align="center">
   <img src="./image/login.jpg" alt="登录页面" height="300" style="margin-right: 10px;" />
   <img src="./image/playgroud.jpg" alt="主界面" height="300" />
 </p>
 
-## �🛠️ 技术栈
+## 🛠️ 技术栈
 
 ### 前端 (Root)
 - **框架**: Vue 3 + TypeScript
@@ -39,7 +39,7 @@
 - **样式**: PostCSS, Sass
 
 ### 后端 (API)
-- **框架**: NestJS
+- **框架**: NestJS (v11)
 - **语言**: TypeScript
 - **数据库交互**: Supabase Client
 - **认证**: Passport, JWT
@@ -72,7 +72,7 @@ cp .env.example .env
 ```
 
 你需要配置以下关键变量：
-- Supabase URL 和 Anon Key
+- Supabase URL 和 Anon/Service Key
 - SecondMe OAuth Client ID 和 Secret
 - 其他 API 密钥
 
