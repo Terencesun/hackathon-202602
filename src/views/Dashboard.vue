@@ -1,10 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useUserStore } from '../stores/user';
+import { logout } from '../api/client';
 import { User, Wallet, Briefcase, Coffee } from 'lucide-vue-next';
 
 const userStore = useUserStore();
 const agent = computed(() => userStore.agent);
+
+async function handleCommand(command: string) {
+  if (command !== 'logout') return;
+
+  try {
+    await logout();
+  } catch {}
+
+  userStore.clearSession();
+  if (window.location.pathname !== '/') {
+    window.location.assign('/');
+  }
+}
 
 const sceneColor = computed(() => {
   switch (agent.value?.identity) {
@@ -37,15 +51,22 @@ const identityIcon = computed(() => {
       <h1 class="font-bold text-xl font-mono">
         My Agent
       </h1>
-      <div class="flex items-center gap-4">
-        <span class="text-sm text-text-secondary">{{ userStore.user?.name }}</span>
-        <el-avatar
-          :size="32"
-          :src="userStore.user?.metadata?.avatar || ''"
-        >
-          {{ userStore.user?.name?.charAt(0) }}
-        </el-avatar>
-      </div>
+      <el-dropdown trigger="click" @command="handleCommand">
+        <div class="flex items-center gap-4 cursor-pointer select-none">
+          <span class="text-sm text-text-secondary">{{ userStore.user?.name }}</span>
+          <el-avatar
+            :size="32"
+            :src="userStore.user?.metadata?.avatar || ''"
+          >
+            {{ userStore.user?.name?.charAt(0) }}
+          </el-avatar>
+        </div>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </header>
 
     <main class="flex-1 p-6 grid grid-cols-1 md:grid-cols-3 gap-6">

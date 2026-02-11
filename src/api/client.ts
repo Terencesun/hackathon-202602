@@ -15,6 +15,10 @@ const authClient = axios.create({
   withCredentials: true,
 });
 
+export async function logout() {
+  await authClient.post('/auth/logout');
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -31,7 +35,7 @@ apiClient.interceptors.response.use(
     ) {
       (config as any).__handledAuthFailure = true;
       try {
-        await authClient.post('/auth/logout');
+        await logout();
       } catch {}
 
       const userStore = useUserStore();
