@@ -19,3 +19,5 @@ RUN npm install pnpm@10.29.2 -g
 COPY --from=builder /app/build ./
 
 RUN pnpm install
+
+CMD [ "pnpm", "run", "start" ]
