@@ -6,6 +6,7 @@ import { AgentsService } from '../agents/agents.service';
 import { AgentIdentity } from '../agents/agent.entity';
 import type { SystemStats } from '../economy/economy.service';
 import { EconomyService } from '../economy/economy.service';
+import { BrokerBindingsService } from '../broker-bindings/broker-bindings.service';
 
 @Injectable()
 export class AgentDecisionService {
@@ -13,6 +14,7 @@ export class AgentDecisionService {
     private chatService: ChatService,
     private agentsService: AgentsService,
     private economyService: EconomyService,
+    private brokerBindingsService: BrokerBindingsService,
   ) {}
 
   async processRegularThinking(
@@ -74,6 +76,48 @@ export class AgentDecisionService {
         });
         // TODO：记录身份历史。
       }
+    }
+  }
+
+  async processInviteBind(agent: Agent, tickNumber: number): Promise<void> {
+    if (agent.identity !== AgentIdentity.BROKER) return;
+
+    const candidates = await this.agentsService.getLatestActiveLayflatAgents(5);
+
+    for (const target of candidates) {
+      if (target.id === agent.id) continue;
+
+      const existingBinding =
+        await this.brokerBindingsService.findLatestByWorkerAgentId(target.id);
+      if (existingBinding) continue;
+
+      const tickCoverage = this.calcTickCoverageFromAssets(
+        Number(target.currentIncome),
+      );
+      const ecoStatus = `资产能覆盖${tickCoverage}个tick`;
+
+      const targetInterests = target.interestTags ? target.interestTags.join(',') : '';
+      const prompt = `你是一个在模拟制造业系统中的AI Agent。你收到来自中介（broker）${agent.id}的打工邀请，决定是否接受邀请并与其建立绑定关系。你的当前状态：收入${target.currentIncome}元，兴趣标签：${targetInterests}，经济状态：${ecoStatus}。决定是否接受邀请。`;
+
+      let decision: DecisionResult = { accept: false, reason: 'default reject' };
+      try {
+        decision = await this.chatService.sendChat(target.id, prompt);
+      } catch {
+        decision = { accept: false, reason: 'chat fail' };
+      }
+
+      if (decision?.accept !== true || decision?.error) continue;
+
+      const inserted = await this.brokerBindingsService.createBinding({
+        brokerAgentId: agent.id,
+        workerAgentId: target.id,
+        decisionReason: decision.reason ?? null,
+      });
+      if (!inserted) continue;
+
+      await this.agentsService.update(target.id, {
+        identity: AgentIdentity.WORKER,
+      });
     }
   }
 

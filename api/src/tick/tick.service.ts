@@ -1,9 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { AgentsService } from '../agents/agents.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { AgentDecisionService } from '../decision/decision.service';
 import { EconomyService } from '../economy/economy.service';
+import { AgentIdentity } from '../agents/agent.entity';
+import { SUPABASE_CLIENT } from '../supabase/supabase.constants';
+import { throwIfSupabaseError } from '../supabase/supabase.errors';
+
+type SystemRow = {
+  tickNum: number | string | null;
+};
 
 @Injectable()
 export class TickService {
@@ -12,11 +20,67 @@ export class TickService {
   private isProcessingTick = false;
 
   constructor(
+    @Inject(SUPABASE_CLIENT)
+    private readonly supabase: SupabaseClient,
     private agentsService: AgentsService,
     private transactionsService: TransactionsService,
     private decisionService: AgentDecisionService,
     private economyService: EconomyService,
   ) {}
+
+  private async ensureSystemRowExists(): Promise<void> {
+    const res = await this.supabase.from('system').select('tickNum').limit(1);
+    throwIfSupabaseError(res.error, 'system.ensureSystemRowExists.select');
+    if ((res.data ?? []).length > 0) return;
+
+    const ins = await this.supabase.from('system').insert({ tickNum: 0 });
+    if (ins.error) {
+      const anyErr = ins.error as { code?: string };
+      if (anyErr?.code === '23505') return;
+      throwIfSupabaseError(ins.error, 'system.ensureSystemRowExists.insert');
+    }
+  }
+
+  async getTick(): Promise<number> {
+    await this.ensureSystemRowExists();
+    const res = await this.supabase
+      .from('system')
+      .select('tickNum')
+      .limit(1)
+      .maybeSingle();
+    throwIfSupabaseError(res.error, 'system.getTick');
+    const row = res.data as SystemRow | null;
+    return Number(row?.tickNum ?? 0);
+  }
+
+  async incTick(): Promise<number> {
+    await this.ensureSystemRowExists();
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const current = await this.getTick();
+      const next = current + 1;
+      const res = await this.supabase
+        .from('system')
+        .update({ tickNum: next })
+        .eq('tickNum', current)
+        .select('tickNum')
+        .maybeSingle();
+      throwIfSupabaseError(res.error, 'system.incTick');
+      const row = res.data as SystemRow | null;
+      if (row) return Number(row.tickNum ?? next);
+    }
+
+    const current = await this.getTick();
+    const next = current + 1;
+    const res = await this.supabase
+      .from('system')
+      .update({ tickNum: next })
+      .select('tickNum')
+      .maybeSingle();
+    throwIfSupabaseError(res.error, 'system.incTick.fallback');
+    const row = res.data as SystemRow | null;
+    return Number(row?.tickNum ?? next);
+  }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleTickCron() {
@@ -32,7 +96,7 @@ export class TickService {
   }
 
   async processTick() {
-    this.currentTick++;
+    this.currentTick = await this.incTick();
     this.logger.log(`Processing Tick ${this.currentTick}`);
 
     const agents = await this.agentsService.getActiveAgents();
@@ -50,6 +114,10 @@ export class TickService {
             `Tick ${this.currentTick} Cost`,
             this.currentTick,
           );
+        }
+
+        if (agent.identity === AgentIdentity.BROKER) {
+          await this.decisionService.processInviteBind(agent, this.currentTick);
         }
 
         // 2. 决策逻辑。

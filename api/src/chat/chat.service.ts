@@ -36,7 +36,6 @@ export class ChatService {
     const systemPrompt = '只输出合法 JSON 对象，不要解释。';
 
     console.log({ message: content, actionControl, systemPrompt });
-    
 
     try {
       const { text: outputText } = await this.secondmeService.actStreamCollectText(

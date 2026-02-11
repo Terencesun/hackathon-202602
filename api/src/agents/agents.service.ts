@@ -127,6 +127,32 @@ export class AgentsService {
     }));
   }
 
+  async getLatestActiveLayflatAgents(limit = 5): Promise<Agent[]> {
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 5;
+    const res = await this.supabase
+      .from('agents')
+      .select('*')
+      .eq('is_active', true)
+      .eq('identity', AgentIdentity.LAYFLAT)
+      .order('updated_at', { ascending: false })
+      .limit(safeLimit);
+    throwIfSupabaseError(res.error, 'agents.getLatestActiveLayflatAgents');
+    const rows = (res.data ?? []) as AgentRow[];
+    return rows.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      user: null,
+      identity: row.identity,
+      interestTags: row.interest_tags ?? [],
+      currentIncome: Number(row.current_income ?? 0),
+      workingHours: Number(row.working_hours ?? 0),
+      currentTick: Number(row.current_tick ?? 0),
+      isActive: Boolean(row.is_active),
+      createdAt: row.created_at ? new Date(row.created_at) : null,
+      updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+    }));
+  }
+
   async update(id: string, data: Partial<Agent>): Promise<Agent | null> {
     const payload: Record<string, unknown> = {};
     if (data.userId) payload.user_id = data.userId;

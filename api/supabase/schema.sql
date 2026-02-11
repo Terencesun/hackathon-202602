@@ -1,5 +1,11 @@
 create extension if not exists "pgcrypto";
 
+create table if not exists public.system (
+  "tickNum" numeric not null default 0
+);
+
+create unique index if not exists idx_system_single_row on public.system ((1));
+
 create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   secondme_id text unique not null,
@@ -59,3 +65,15 @@ create table if not exists public.income_records (
 );
 
 create index if not exists idx_income_records_agent_id on public.income_records(agent_id);
+
+create table if not exists public.broker_worker_bindings (
+  id uuid primary key default gen_random_uuid(),
+  broker_agent_id uuid not null references public.agents(id) on delete cascade,
+  worker_agent_id uuid not null references public.agents(id) on delete cascade,
+  decision_reason text null,
+  created_at timestamptz not null default now(),
+  constraint broker_worker_bindings_unique unique (broker_agent_id, worker_agent_id)
+);
+
+create index if not exists idx_broker_worker_bindings_broker_agent_id on public.broker_worker_bindings(broker_agent_id);
+create index if not exists idx_broker_worker_bindings_worker_agent_id on public.broker_worker_bindings(worker_agent_id);
