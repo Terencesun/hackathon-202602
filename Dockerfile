@@ -2,6 +2,8 @@ FROM node:22.20.0-slim AS builder
 
 WORKDIR /app
 
+RUN ls
+
 RUN npm install pnpm@10.29.2 -g
 
 RUN pnpm run installpkg
