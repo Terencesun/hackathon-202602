@@ -54,7 +54,8 @@ export class AgentDecisionService {
       `总Agent数${systemStats.total_agents}，工人比例${systemStats.worker_ratio}，中介比例${systemStats.broker_ratio}，躺平者比例${systemStats.layflat_ratio}`,
       `你需要结合你的经济情况和兴趣，来决定是否去打工，打工和做中介某种程度上会优化你的经济情况。`,
       `打工仔和中介的区别在于，中介风险高但可能收益更好，打工仔相对稳定但收益有限。`,
-      `当经济情况不乐观的时候，请记住，你要活下去`,
+      `当经济情况不乐观的时候，请记住，你要活下去。`,
+      `当经济情况乐观的时候，请记住，休息和娱乐也是重要的。`,
       `回答的时候，你的原因请围绕你个人情况来作答。`,
     ].join('\n');
 
@@ -100,6 +101,7 @@ export class AgentDecisionService {
         `你的当前状态：收入${target.currentIncome}元，兴趣标签：${targetInterests}，经济状态：${ecoStatus}。`,
         `你需要结合你的经济情况和兴趣，来决定是否去打工，打工和做中介某种程度上会优化你的经济情况。`,
         `当经济情况不乐观的时候，请记住，你要活下去`,
+        `当经济情况乐观的时候，请记住，休息和娱乐也是重要的。`,
         `回答的时候，你的原因请围绕你个人情况来作答。`,
         `决定是否接受邀请。`,
       ].join('\n');
