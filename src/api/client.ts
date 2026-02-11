@@ -6,11 +6,13 @@ const baseURL = import.meta.env.VITE_API_URL || '/api';
 const apiClient = axios.create({
   baseURL,
   timeout: 10000,
+  withCredentials: true,
 });
 
 const authClient = axios.create({
   baseURL,
   timeout: 10000,
+  withCredentials: true,
 });
 
 export async function logout() {

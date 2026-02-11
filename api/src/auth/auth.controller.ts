@@ -8,11 +8,16 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { Response } from 'express';
-import { AUTH_COOKIE_NAME, getAuthCookieOptions } from './auth.cookies';
+import { AuthCookiesService } from './auth.cookies';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private authCookies: AuthCookiesService,
+    private configService: ConfigService,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -24,18 +29,30 @@ export class AuthController {
       body.code,
       body.redirectUri,
     );
-    res.cookie(AUTH_COOKIE_NAME, result.access_token, {
-      ...getAuthCookieOptions(),
-    });
+
+    res.cookie(
+      this.authCookies.getAuthCookieName(
+        this.configService.get<string>('COOKIE_KEY_NAME'),
+      ),
+      result.access_token,
+      {
+        ...this.authCookies.getAuthCookieOptions(),
+      },
+    );
     return { user: result.user, agent: result.agent };
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie(AUTH_COOKIE_NAME, {
-      ...getAuthCookieOptions(),
-    });
+    res.clearCookie(
+      this.authCookies.getAuthCookieName(
+        this.configService.get<string>('COOKIE_KEY_NAME'),
+      ),
+      {
+        ...this.authCookies.getAuthCookieOptions(),
+      },
+    );
     return { ok: true };
   }
 }

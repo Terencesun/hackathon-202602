@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import { SecondmeModule } from '../secondme/secondme.module';
+import { AuthCookiesService } from './auth.cookies';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { SecondmeModule } from '../secondme/secondme.module';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, AuthCookiesService],
   controllers: [AuthController],
 })
 export class AuthModule {}
