@@ -48,7 +48,6 @@ export class AgentController {
       id: agent.id,
       identity: agent.identity,
       current_income: agent.currentIncome,
-      working_hours: agent.workingHours,
       current_tick: agent.currentTick,
       interest_tags: agent.interestTags,
       user: {

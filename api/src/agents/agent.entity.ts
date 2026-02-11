@@ -13,7 +13,6 @@ export class Agent {
   identity: AgentIdentity;
   interestTags: string[];
   currentIncome: number;
-  workingHours: number;
   currentTick: number;
   isActive: boolean;
   createdAt: Date | null;

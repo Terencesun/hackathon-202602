@@ -23,7 +23,6 @@ type AgentRow = {
   identity: AgentIdentity;
   interest_tags: string[] | null;
   current_income: number | string | null;
-  working_hours: number | string | null;
   current_tick: number | string | null;
   is_active: boolean | null;
   created_at: string | null;
@@ -54,7 +53,6 @@ export class AgentsService {
           identity: row.identity,
           interestTags: row.interest_tags ?? [],
           currentIncome: Number(row.current_income ?? 0),
-          workingHours: Number(row.working_hours ?? 0),
           currentTick: Number(row.current_tick ?? 0),
           isActive: Boolean(row.is_active),
           createdAt: row.created_at ? new Date(row.created_at) : null,
@@ -79,7 +77,6 @@ export class AgentsService {
           identity: row.identity,
           interestTags: row.interest_tags ?? [],
           currentIncome: Number(row.current_income ?? 0),
-          workingHours: Number(row.working_hours ?? 0),
           currentTick: Number(row.current_tick ?? 0),
           isActive: Boolean(row.is_active),
           createdAt: row.created_at ? new Date(row.created_at) : null,
@@ -95,7 +92,6 @@ export class AgentsService {
         user_id: userId,
         identity: AgentIdentity.LAYFLAT, // 默认身份为躺平者，后续可由 Agent 自行决策改变。
         current_income: 0,
-        working_hours: 0,
         current_tick: 0,
         interest_tags: [],
         is_active: true,
@@ -111,7 +107,6 @@ export class AgentsService {
       identity: row.identity,
       interestTags: row.interest_tags ?? [],
       currentIncome: Number(row.current_income ?? 0),
-      workingHours: Number(row.working_hours ?? 0),
       currentTick: Number(row.current_tick ?? 0),
       isActive: Boolean(row.is_active),
       createdAt: row.created_at ? new Date(row.created_at) : null,
@@ -188,7 +183,6 @@ export class AgentsService {
       identity: row.identity,
       interestTags: row.interest_tags ?? [],
       currentIncome: Number(row.current_income ?? 0),
-      workingHours: Number(row.working_hours ?? 0),
       currentTick: Number(row.current_tick ?? 0),
       isActive: Boolean(row.is_active),
       createdAt: row.created_at ? new Date(row.created_at) : null,
@@ -215,7 +209,6 @@ export class AgentsService {
       identity: row.identity,
       interestTags: row.interest_tags ?? [],
       currentIncome: Number(row.current_income ?? 0),
-      workingHours: Number(row.working_hours ?? 0),
       currentTick: Number(row.current_tick ?? 0),
       isActive: Boolean(row.is_active),
       createdAt: row.created_at ? new Date(row.created_at) : null,
@@ -230,8 +223,6 @@ export class AgentsService {
     if (data.interestTags) payload.interest_tags = data.interestTags;
     if (data.currentIncome !== undefined)
       payload.current_income = data.currentIncome;
-    if (data.workingHours !== undefined)
-      payload.working_hours = data.workingHours;
     if (data.currentTick !== undefined) payload.current_tick = data.currentTick;
     if (data.isActive !== undefined) payload.is_active = data.isActive;
 
@@ -251,7 +242,6 @@ export class AgentsService {
           identity: row.identity,
           interestTags: row.interest_tags ?? [],
           currentIncome: Number(row.current_income ?? 0),
-          workingHours: Number(row.working_hours ?? 0),
           currentTick: Number(row.current_tick ?? 0),
           isActive: Boolean(row.is_active),
           createdAt: row.created_at ? new Date(row.created_at) : null,

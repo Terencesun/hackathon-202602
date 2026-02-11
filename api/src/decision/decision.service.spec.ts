@@ -35,7 +35,6 @@ describe('AgentDecisionService', () => {
       identity: AgentIdentity.LAYFLAT,
       interestTags: [],
       currentIncome: 0,
-      workingHours: 0,
       currentTick: 0,
       isActive: true,
       createdAt: null,
@@ -148,7 +147,6 @@ describe('AgentDecisionService', () => {
       const agent = makeAgent({
         identity: AgentIdentity.WORKER,
         currentIncome: 10,
-        workingHours: 3,
         interestTags: ['效率', '赚钱'],
       });
       chatService.sendChat.mockResolvedValueOnce({

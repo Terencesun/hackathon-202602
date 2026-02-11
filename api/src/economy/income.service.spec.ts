@@ -17,45 +17,40 @@ describe('IncomeService', () => {
       const result = svc.applyFactorySalaryPolicy({
         totalAgents: 10,
         currentWorkers: 3,
-        workHours: 8,
       });
 
       expect(result.optimalWorkers).toBe(6);
       expect(result.wageMultiplier).toBeCloseTo(1.5, 8);
       expect(result.hourlyWage).toBeCloseTo(30, 8);
-      expect(result.totalPay).toBeCloseTo(240, 8);
+      expect(result.totalPay).toBeCloseTo(30, 8);
     });
 
     it('工人过剩时小时工资下降', () => {
       const result = svc.applyFactorySalaryPolicy({
         totalAgents: 10,
         currentWorkers: 9,
-        workHours: 8,
       });
 
       expect(result.optimalWorkers).toBe(6);
       expect(result.wageMultiplier).toBeCloseTo(0.5, 8);
       expect(result.hourlyWage).toBeCloseTo(10, 8);
-      expect(result.totalPay).toBeCloseTo(80, 8);
+      expect(result.totalPay).toBeCloseTo(10, 8);
     });
 
-    it('工资总额等于小时工资乘以工时', () => {
+    it('工资总额等于小时工资', () => {
       const result = svc.applyFactorySalaryPolicy({
         totalAgents: 10,
         currentWorkers: 6,
-        workHours: 10,
       });
 
       expect(result.hourlyWage).toBeCloseTo(20, 8);
-      expect(result.workHours).toBe(10);
-      expect(result.totalPay).toBeCloseTo(200, 8);
+      expect(result.totalPay).toBeCloseTo(20, 8);
     });
 
     it('当工资倍率为负时，小时工资按 0 处理', () => {
       const result = svc.applyFactorySalaryPolicy({
         totalAgents: 10,
         currentWorkers: 100,
-        workHours: 8,
       });
 
       expect(result.wageMultiplier).toBeLessThan(0);
@@ -140,7 +135,6 @@ describe('IncomeService', () => {
         identity: 'worker',
         totalAgents: 10,
         currentWorkers: 3,
-        workHours: 8,
         currentTick: 24,
         invitesInCurrentDay: 10,
         successfulDirectInviteeFirstMonthWages: [1000],
@@ -149,7 +143,7 @@ describe('IncomeService', () => {
       expect(result).toEqual([
         {
           type: 'worker_income',
-          amount: 240,
+          amount: 30,
           reason: '工资收入',
         },
       ]);
@@ -160,7 +154,6 @@ describe('IncomeService', () => {
         identity: 'broker',
         totalAgents: 10,
         currentWorkers: 3,
-        workHours: 8,
         currentTick: 24,
         invitesInCurrentDay: 10,
         successfulDirectInviteeFirstMonthWages: [1000],
@@ -193,7 +186,6 @@ describe('IncomeService', () => {
         identity: 'layflat',
         totalAgents: 10,
         currentWorkers: 3,
-        workHours: 8,
         currentTick: 24,
         invitesInCurrentDay: 10,
         successfulDirectInviteeFirstMonthWages: [1000],

@@ -23,7 +23,6 @@ export type AgentMeResponse = {
   id: string;
   identity: string;
   current_income: number;
-  working_hours: number;
   current_tick: number;
   interest_tags: string[];
   user: {

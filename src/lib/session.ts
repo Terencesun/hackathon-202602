@@ -23,7 +23,6 @@ export async function hydrateSession(userStore: {
           id: data.id,
           identity: data.identity,
           currentIncome: Number(data.current_income ?? 0),
-          workingHours: Number(data.working_hours ?? 0),
           currentTick: Number(data.current_tick ?? 0),
           interestTags: Array.isArray(data.interest_tags) ? data.interest_tags : [],
         },

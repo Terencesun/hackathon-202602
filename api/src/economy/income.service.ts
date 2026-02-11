@@ -5,7 +5,6 @@ export type LaborMarketState = 'scarce' | 'balanced' | 'surplus';
 export type FactoryPayrollInput = {
   totalAgents: number;
   currentWorkers: number;
-  workHours: number;
 };
 
 export type FactoryPayrollResult = {
@@ -13,7 +12,6 @@ export type FactoryPayrollResult = {
   hourlyWage: number;
   wageMultiplier: number;
   optimalWorkers: number;
-  workHours: number;
   totalPay: number;
 };
 
@@ -41,7 +39,6 @@ export type ApplyIncomeInput = {
   identity: AgentIncomeIdentity;
   totalAgents: number;
   currentWorkers: number;
-  workHours: number;
   currentTick: number;
   invitesInCurrentDay: number;
   successfulDirectInviteeFirstMonthWages: number[];
@@ -79,7 +76,6 @@ export class IncomeService {
       const factory = this.applyFactorySalaryPolicy({
         totalAgents: input.totalAgents,
         currentWorkers: input.currentWorkers,
-        workHours: input.workHours,
       });
       // 2) 将“工资总额”包装为可入账的 IncomeItem
       return [
@@ -149,16 +145,14 @@ export class IncomeService {
       this.BASE_HOURLY_WAGE * wageMultiplier,
     );
 
-    // 4) 工时也做非负钳制；最终总工资=工时*时薪
-    const workHours = this.clampNonNegative(input.workHours);
-    const totalPay = workHours * hourlyWage;
+    // 4) 最终总工资=1*时薪
+    const totalPay = 1 * hourlyWage;
 
     return {
       baseHourlyWage: this.BASE_HOURLY_WAGE,
       hourlyWage,
       wageMultiplier,
       optimalWorkers,
-      workHours,
       totalPay,
     };
   }

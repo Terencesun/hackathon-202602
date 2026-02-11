@@ -144,13 +144,10 @@ export class TickService {
       identity: agent.identity as unknown as AgentIncomeIdentity,
       totalAgents,
       currentWorkers,
-      workHours: agent.workingHours,
       currentTick: this.currentTick,
       invitesInCurrentDay: 0,
       successfulDirectInviteeFirstMonthWages: [],
     });
-
-    console.log(incomeItems);
 
     if (brokerBinding) {
       const startTick = brokerBinding.startTick;

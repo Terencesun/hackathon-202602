@@ -46,7 +46,6 @@ describe('TickService', () => {
       identity: AgentIdentity.LAYFLAT,
       interestTags: [],
       currentIncome: 0,
-      workingHours: 0,
       currentTick: 0,
       isActive: true,
       createdAt: null,
@@ -101,7 +100,6 @@ describe('TickService', () => {
       const agent = makeAgent({
         id: 'a1',
         identity: AgentIdentity.WORKER,
-        workingHours: 6,
       });
 
       economyService.getLivingCosts.mockReturnValue({ rent: 0.8, food: 1.2 });
@@ -122,7 +120,6 @@ describe('TickService', () => {
           identity: AgentIdentity.WORKER,
           totalAgents: 10,
           currentWorkers: 4,
-          workHours: 6,
           currentTick: 100,
         }),
       );
@@ -184,7 +181,6 @@ describe('TickService', () => {
       const agent = makeAgent({
         id: 'a1',
         identity: AgentIdentity.LAYFLAT,
-        workingHours: 1,
       });
 
       economyService.getLivingCosts.mockReturnValue({ basic: 0.6 });
@@ -275,7 +271,6 @@ describe('TickService', () => {
           identity: AgentIdentity.WORKER,
           totalAgents: 1,
           currentWorkers: 1,
-          workHours: agent.workingHours,
           currentTick: 100,
         }),
       );
