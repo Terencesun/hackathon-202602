@@ -64,38 +64,74 @@ describe('AgentDecisionService', () => {
 
   describe('processRoleChange', () => {
     it('同身份不触发任何关系清理', async () => {
-      await svc.processRoleChange('a1', AgentIdentity.WORKER, AgentIdentity.WORKER);
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.WORKER,
+        AgentIdentity.WORKER,
+      );
       expect(brokerBindingsService.removeRelFromWorker).not.toHaveBeenCalled();
       expect(brokerBindingsService.removeRelFromBroker).not.toHaveBeenCalled();
     });
 
     it('工人切换到中介会解除其作为工人的绑定关系', async () => {
-      await svc.processRoleChange('a1', AgentIdentity.WORKER, AgentIdentity.BROKER);
-      expect(brokerBindingsService.removeRelFromWorker).toHaveBeenCalledWith('a1');
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.WORKER,
+        AgentIdentity.BROKER,
+      );
+      expect(brokerBindingsService.removeRelFromWorker).toHaveBeenCalledWith(
+        'a1',
+      );
       expect(brokerBindingsService.removeRelFromBroker).not.toHaveBeenCalled();
     });
 
     it('工人切换到躺平会解除其作为工人的绑定关系', async () => {
-      await svc.processRoleChange('a1', AgentIdentity.WORKER, AgentIdentity.LAYFLAT);
-      expect(brokerBindingsService.removeRelFromWorker).toHaveBeenCalledWith('a1');
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.WORKER,
+        AgentIdentity.LAYFLAT,
+      );
+      expect(brokerBindingsService.removeRelFromWorker).toHaveBeenCalledWith(
+        'a1',
+      );
       expect(brokerBindingsService.removeRelFromBroker).not.toHaveBeenCalled();
     });
 
     it('中介切换到工人会解除其作为中介的绑定关系', async () => {
-      await svc.processRoleChange('a1', AgentIdentity.BROKER, AgentIdentity.WORKER);
-      expect(brokerBindingsService.removeRelFromBroker).toHaveBeenCalledWith('a1');
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.BROKER,
+        AgentIdentity.WORKER,
+      );
+      expect(brokerBindingsService.removeRelFromBroker).toHaveBeenCalledWith(
+        'a1',
+      );
       expect(brokerBindingsService.removeRelFromWorker).not.toHaveBeenCalled();
     });
 
     it('中介切换到躺平会解除其作为中介的绑定关系', async () => {
-      await svc.processRoleChange('a1', AgentIdentity.BROKER, AgentIdentity.LAYFLAT);
-      expect(brokerBindingsService.removeRelFromBroker).toHaveBeenCalledWith('a1');
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.BROKER,
+        AgentIdentity.LAYFLAT,
+      );
+      expect(brokerBindingsService.removeRelFromBroker).toHaveBeenCalledWith(
+        'a1',
+      );
       expect(brokerBindingsService.removeRelFromWorker).not.toHaveBeenCalled();
     });
 
     it('躺平切换身份不会触发关系清理', async () => {
-      await svc.processRoleChange('a1', AgentIdentity.LAYFLAT, AgentIdentity.BROKER);
-      await svc.processRoleChange('a1', AgentIdentity.LAYFLAT, AgentIdentity.WORKER);
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.LAYFLAT,
+        AgentIdentity.BROKER,
+      );
+      await svc.processRoleChange(
+        'a1',
+        AgentIdentity.LAYFLAT,
+        AgentIdentity.WORKER,
+      );
       expect(brokerBindingsService.removeRelFromWorker).not.toHaveBeenCalled();
       expect(brokerBindingsService.removeRelFromBroker).not.toHaveBeenCalled();
     });
@@ -109,13 +145,18 @@ describe('AgentDecisionService', () => {
         workingHours: 3,
         interestTags: ['效率', '赚钱'],
       });
-      chatService.sendChat.mockResolvedValueOnce({ continue: false, reason: '想休息' });
+      chatService.sendChat.mockResolvedValueOnce({
+        continue: false,
+        reason: '想休息',
+      });
 
       await svc.processRegularThinking(agent, 7);
 
       expect(chatService.sendChat).toHaveBeenCalledTimes(1);
       expect(chatService.sendChat.mock.calls[0][0]).toBe(agent.id);
-      expect(chatService.sendChat.mock.calls[0][1]).toContain('决定是否继续当前身份');
+      expect(chatService.sendChat.mock.calls[0][1]).toContain(
+        '决定是否继续当前身份',
+      );
 
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
         identity: AgentIdentity.LAYFLAT,
@@ -159,7 +200,10 @@ describe('AgentDecisionService', () => {
     };
 
     it('模型选择 worker 时身份切换为工人', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.LAYFLAT, currentIncome: 12 });
+      const agent = makeAgent({
+        identity: AgentIdentity.LAYFLAT,
+        currentIncome: 12,
+      });
       chatService.sendChat.mockResolvedValueOnce({
         next_identity: 'worker',
         reason: '去上班',
@@ -169,14 +213,19 @@ describe('AgentDecisionService', () => {
 
       expect(chatService.sendChat).toHaveBeenCalledTimes(1);
       expect(chatService.sendChat.mock.calls[0][0]).toBe(agent.id);
-      expect(chatService.sendChat.mock.calls[0][1]).toContain('选择未来24tick身份');
+      expect(chatService.sendChat.mock.calls[0][1]).toContain(
+        '选择未来24tick身份',
+      );
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
         identity: AgentIdentity.WORKER,
       });
     });
 
     it('模型选择 broker 时身份切换为中介', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.WORKER, currentIncome: 12 });
+      const agent = makeAgent({
+        identity: AgentIdentity.WORKER,
+        currentIncome: 12,
+      });
       chatService.sendChat.mockResolvedValueOnce({
         next_identity: 'broker',
         reason: '去撮合',
@@ -190,7 +239,10 @@ describe('AgentDecisionService', () => {
     });
 
     it('模型选择 layflat 或未知值时身份切换为躺平', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.WORKER, currentIncome: 12 });
+      const agent = makeAgent({
+        identity: AgentIdentity.WORKER,
+        currentIncome: 12,
+      });
       chatService.sendChat.mockResolvedValueOnce({
         next_identity: 'layflat',
         reason: '休息',
@@ -212,7 +264,10 @@ describe('AgentDecisionService', () => {
     });
 
     it('模型未返回 next_identity 时不发生身份切换', async () => {
-      const agent = makeAgent({ identity: AgentIdentity.WORKER, currentIncome: 12 });
+      const agent = makeAgent({
+        identity: AgentIdentity.WORKER,
+        currentIncome: 12,
+      });
       chatService.sendChat.mockResolvedValueOnce({ reason: '没有明确选择' });
 
       await svc.processIdentityThinking(agent, 8, systemStats);
@@ -231,25 +286,44 @@ describe('AgentDecisionService', () => {
     });
 
     it('跳过自己与已有绑定的候选人', async () => {
-      const broker = makeAgent({ id: 'broker-1', identity: AgentIdentity.BROKER });
-      const self = makeAgent({ id: 'broker-1', identity: AgentIdentity.LAYFLAT });
-      const boundWorker = makeAgent({ id: 'w1', identity: AgentIdentity.LAYFLAT });
+      const broker = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.BROKER,
+      });
+      const self = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.LAYFLAT,
+      });
+      const boundWorker = makeAgent({
+        id: 'w1',
+        identity: AgentIdentity.LAYFLAT,
+      });
 
-      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([self, boundWorker]);
+      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([
+        self,
+        boundWorker,
+      ]);
       brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce({
         id: 'b1',
       } as any);
 
       await svc.processInviteBind(broker, 1);
 
-      expect(brokerBindingsService.findLatestByWorkerAgentId).toHaveBeenCalledTimes(1);
-      expect(brokerBindingsService.findLatestByWorkerAgentId).toHaveBeenCalledWith('w1');
+      expect(
+        brokerBindingsService.findLatestByWorkerAgentId,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        brokerBindingsService.findLatestByWorkerAgentId,
+      ).toHaveBeenCalledWith('w1');
       expect(chatService.sendChat).not.toHaveBeenCalled();
       expect(brokerBindingsService.createBinding).not.toHaveBeenCalled();
     });
 
     it('邀请对话失败会直接跳过该候选人', async () => {
-      const broker = makeAgent({ id: 'broker-1', identity: AgentIdentity.BROKER });
+      const broker = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.BROKER,
+      });
       const worker = makeAgent({
         id: 'w1',
         identity: AgentIdentity.LAYFLAT,
@@ -257,8 +331,12 @@ describe('AgentDecisionService', () => {
         interestTags: ['稳定'],
       });
 
-      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([worker]);
-      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(null);
+      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([
+        worker,
+      ]);
+      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(
+        null,
+      );
       chatService.sendChat.mockRejectedValueOnce(new Error('chat down'));
 
       await svc.processInviteBind(broker, 1);
@@ -268,12 +346,22 @@ describe('AgentDecisionService', () => {
     });
 
     it('候选人拒绝邀请时不会创建绑定', async () => {
-      const broker = makeAgent({ id: 'broker-1', identity: AgentIdentity.BROKER });
+      const broker = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.BROKER,
+      });
       const worker = makeAgent({ id: 'w1', identity: AgentIdentity.LAYFLAT });
 
-      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([worker]);
-      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(null);
-      chatService.sendChat.mockResolvedValueOnce({ accept: false, reason: '不想上班' });
+      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([
+        worker,
+      ]);
+      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(
+        null,
+      );
+      chatService.sendChat.mockResolvedValueOnce({
+        accept: false,
+        reason: '不想上班',
+      });
 
       await svc.processInviteBind(broker, 1);
 
@@ -282,11 +370,18 @@ describe('AgentDecisionService', () => {
     });
 
     it('候选人接受但返回 error 时不会创建绑定', async () => {
-      const broker = makeAgent({ id: 'broker-1', identity: AgentIdentity.BROKER });
+      const broker = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.BROKER,
+      });
       const worker = makeAgent({ id: 'w1', identity: AgentIdentity.LAYFLAT });
 
-      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([worker]);
-      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(null);
+      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([
+        worker,
+      ]);
+      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(
+        null,
+      );
       chatService.sendChat.mockResolvedValueOnce({
         accept: true,
         error: '模型输出异常',
@@ -299,12 +394,22 @@ describe('AgentDecisionService', () => {
     });
 
     it('创建绑定失败时不会切换候选人身份', async () => {
-      const broker = makeAgent({ id: 'broker-1', identity: AgentIdentity.BROKER });
+      const broker = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.BROKER,
+      });
       const worker = makeAgent({ id: 'w1', identity: AgentIdentity.LAYFLAT });
 
-      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([worker]);
-      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(null);
-      chatService.sendChat.mockResolvedValueOnce({ accept: true, reason: '可以试试' });
+      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([
+        worker,
+      ]);
+      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(
+        null,
+      );
+      chatService.sendChat.mockResolvedValueOnce({
+        accept: true,
+        reason: '可以试试',
+      });
       brokerBindingsService.createBinding.mockResolvedValueOnce(null);
 
       await svc.processInviteBind(broker, 1);
@@ -314,13 +419,25 @@ describe('AgentDecisionService', () => {
     });
 
     it('候选人接受且创建绑定成功后会切换为工人', async () => {
-      const broker = makeAgent({ id: 'broker-1', identity: AgentIdentity.BROKER });
+      const broker = makeAgent({
+        id: 'broker-1',
+        identity: AgentIdentity.BROKER,
+      });
       const worker = makeAgent({ id: 'w1', identity: AgentIdentity.LAYFLAT });
 
-      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([worker]);
-      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(null);
-      chatService.sendChat.mockResolvedValueOnce({ accept: true, reason: '想赚钱' });
-      brokerBindingsService.createBinding.mockResolvedValueOnce({ id: 'bind-1' });
+      agentsService.getLatestActiveLayflatAgents.mockResolvedValueOnce([
+        worker,
+      ]);
+      brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValueOnce(
+        null,
+      );
+      chatService.sendChat.mockResolvedValueOnce({
+        accept: true,
+        reason: '想赚钱',
+      });
+      brokerBindingsService.createBinding.mockResolvedValueOnce({
+        id: 'bind-1',
+      });
 
       await svc.processInviteBind(broker, 1);
 
@@ -366,7 +483,9 @@ describe('AgentDecisionService', () => {
       ) => number;
       const result = fn(31);
 
-      expect(economyService.getLivingCosts).toHaveBeenCalledWith(AgentIdentity.LAYFLAT);
+      expect(economyService.getLivingCosts).toHaveBeenCalledWith(
+        AgentIdentity.LAYFLAT,
+      );
       expect(result).toBe(2);
     });
 

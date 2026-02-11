@@ -11,7 +11,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       const signedValue = req?.signedCookies?.[AUTH_COOKIE_NAME];
       if (typeof signedValue === 'string' && signedValue) return signedValue;
       const unsignedValue = req?.cookies?.[AUTH_COOKIE_NAME];
-      if (typeof unsignedValue === 'string' && unsignedValue) return unsignedValue;
+      if (typeof unsignedValue === 'string' && unsignedValue)
+        return unsignedValue;
       return null;
     };
 

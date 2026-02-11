@@ -56,7 +56,9 @@ export async function collectSecondMeSseText(
       }
       if (currentEvent === 'error') {
         const msg =
-          typeof payload.message === 'string' ? payload.message : 'SecondMe error';
+          typeof payload.message === 'string'
+            ? payload.message
+            : 'SecondMe error';
         throw new Error(msg);
       }
       currentEvent = null;

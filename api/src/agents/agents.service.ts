@@ -128,7 +128,8 @@ export class AgentsService {
   }
 
   async getLatestActiveLayflatAgents(limit = 5): Promise<Agent[]> {
-    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 5;
+    const safeLimit =
+      Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 5;
     const res = await this.supabase
       .from('agents')
       .select('*')

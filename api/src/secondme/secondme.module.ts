@@ -8,4 +8,3 @@ import { SecondmeService } from './secondme.service';
   exports: [SecondmeService],
 })
 export class SecondmeModule {}
-

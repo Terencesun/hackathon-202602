@@ -24,7 +24,8 @@ describe('collectSecondMeSseText', () => {
       'data: [DONE]\n',
     ];
     const stream = Readable.from(lines);
-    await expect(collectSecondMeSseText(stream)).rejects.toThrow('服务内部错误');
+    await expect(collectSecondMeSseText(stream)).rejects.toThrow(
+      '服务内部错误',
+    );
   });
 });
-

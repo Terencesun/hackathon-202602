@@ -4,10 +4,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { AgentsService } from '../agents/agents.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { AgentDecisionService } from '../decision/decision.service';
-import { EconomyService } from '../economy/economy.service';
-import { AgentIdentity } from '../agents/agent.entity';
+import { EconomyService, type SystemStats } from '../economy/economy.service';
+import {
+  IncomeService,
+  type AgentIncomeIdentity,
+} from '../economy/income.service';
+import { Agent, AgentIdentity } from '../agents/agent.entity';
 import { SUPABASE_CLIENT } from '../supabase/supabase.constants';
 import { throwIfSupabaseError } from '../supabase/supabase.errors';
+import { from, of, lastValueFrom } from 'rxjs';
+import { mergeMap, catchError, map } from 'rxjs/operators';
 
 type SystemRow = {
   tickNum: number | string | null;
@@ -26,6 +32,7 @@ export class TickService {
     private transactionsService: TransactionsService,
     private decisionService: AgentDecisionService,
     private economyService: EconomyService,
+    private incomeService: IncomeService,
   ) {}
 
   private async ensureSystemRowExists(): Promise<void> {
@@ -95,67 +102,112 @@ export class TickService {
     }
   }
 
+  private async processTickHandle(
+    agent: Agent,
+    totalAgents: number,
+    currentWorkers: number,
+    systemStats: SystemStats,
+  ): Promise<void> {
+    const oldRole = agent.identity;
+
+    const costs = this.economyService.getLivingCosts(agent.identity);
+    for (const [type, amount] of Object.entries(costs)) {
+      await this.transactionsService.createTransaction(
+        agent.id,
+        type + '_cost',
+        -Number(amount),
+        `生活成本`,
+        this.currentTick,
+      );
+    }
+
+    const incomeItems = this.incomeService.applyIncom({
+      identity: agent.identity as unknown as AgentIncomeIdentity,
+      totalAgents,
+      currentWorkers,
+      workHours: agent.workingHours,
+      currentTick: this.currentTick,
+      invitesInCurrentDay: 0,
+      successfulDirectInviteeFirstMonthWages: [],
+    });
+    for (const item of incomeItems) {
+      if (item.amount === 0) continue;
+      await this.transactionsService.createTransaction(
+        agent.id,
+        item.type,
+        item.amount,
+        item.reason,
+        this.currentTick,
+      );
+    }
+
+    if (agent.identity === AgentIdentity.BROKER) {
+      await this.decisionService.processInviteBind(agent, this.currentTick);
+    }
+
+    if (this.currentTick % 24 === 0) {
+      await this.decisionService.processIdentityThinking(
+        agent,
+        this.currentTick,
+        systemStats,
+      );
+    } else {
+      await this.decisionService.processRegularThinking(
+        agent,
+        this.currentTick,
+      );
+    }
+
+    const latestAgent = await this.agentsService.findOne(agent.id);
+    if (latestAgent && latestAgent.identity) {
+      await this.decisionService.processRoleChange(
+        agent.id,
+        oldRole,
+        latestAgent.identity,
+      );
+    }
+
+    await this.agentsService.update(agent.id, {
+      currentTick: this.currentTick,
+    });
+  }
+
   async processTick() {
     this.currentTick = await this.incTick();
     this.logger.log(`Processing Tick ${this.currentTick}`);
 
     const agents = await this.agentsService.getActiveAgents();
     const systemStats = await this.economyService.getSystemStats();
+    const totalAgents = agents.length;
+    const currentWorkers = agents.filter(
+      (a) => a.identity === AgentIdentity.WORKER,
+    ).length;
 
-    for (const agent of agents) {
-      try {
-        const oldRole = agent.identity;
+    if (agents.length === 0) return;
 
-        // 1. 扣除生活成本。
-        const costs = this.economyService.getLivingCosts(agent.identity);
-        for (const [type, amount] of Object.entries(costs)) {
-          await this.transactionsService.createTransaction(
-            agent.id,
-            type + '_cost',
-            -Number(amount),
-            `Tick ${this.currentTick} Cost`,
-            this.currentTick,
-          );
-        }
-
-        if (agent.identity === AgentIdentity.BROKER) {
-          await this.decisionService.processInviteBind(agent, this.currentTick);
-        }
-
-        // 2. 决策逻辑。
-        if (this.currentTick % 24 === 0) {
-          // 身份决策
-          await this.decisionService.processIdentityThinking(
-            agent,
-            this.currentTick,
-            systemStats,
-          );
-        } else {
-          // 普通决策
-          await this.decisionService.processRegularThinking(
-            agent,
-            this.currentTick,
-          );
-        }
-
-        // 3. 中介关系处理
-        const latestAgent = await this.agentsService.findOne(agent.id);
-        if (latestAgent && latestAgent.identity) {
-          await this.decisionService.processRoleChange(
-            agent.id,
-            oldRole,
-            latestAgent.identity,
-          );
-        }
-
-        // 更新 Agent 的 tick。
-        await this.agentsService.update(agent.id, {
-          currentTick: this.currentTick,
-        });
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        this.logger.error(`Error processing agent ${agent.id}: ${msg}`);
-      }
-    }
+    const concurrency = Math.max(1, Number(process.env.TICK_CONCURRENCY ?? 4));
+    await lastValueFrom(
+      from(agents).pipe(
+        mergeMap(
+          (agent) =>
+            from(
+              this.processTickHandle(
+                agent,
+                totalAgents,
+                currentWorkers,
+                systemStats,
+              ),
+            ).pipe(
+              map(() => null),
+              catchError((e) => {
+                const msg = e instanceof Error ? e.message : String(e);
+                this.logger.error(`Error processing agent ${agent.id}: ${msg}`);
+                return of(null);
+              }),
+            ),
+          concurrency,
+        ),
+      ),
+    );
   }
 }

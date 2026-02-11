@@ -117,19 +117,26 @@ export class SecondmeService {
     accessToken: string,
     params?: { keyword?: string; pageNo?: number; pageSize?: number },
   ): Promise<SecondMeSoftMemoryData> {
-    return this.getJson<SecondMeSoftMemoryData>('/api/secondme/user/softmemory', {
-      accessToken,
-      params,
-    });
+    return this.getJson<SecondMeSoftMemoryData>(
+      '/api/secondme/user/softmemory',
+      {
+        accessToken,
+        params,
+      },
+    );
   }
 
   async noteAdd(
     accessToken: string,
     payload: SecondMeNoteAddRequest,
   ): Promise<SecondMeNoteAddData> {
-    return this.postJson<SecondMeNoteAddData>('/api/secondme/note/add', payload, {
-      accessToken,
-    });
+    return this.postJson<SecondMeNoteAddData>(
+      '/api/secondme/note/add',
+      payload,
+      {
+        accessToken,
+      },
+    );
   }
 
   async ttsGenerate(
@@ -279,4 +286,3 @@ export class SecondmeService {
     return (response as { data: TData }).data;
   }
 }
-

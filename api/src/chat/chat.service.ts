@@ -5,10 +5,7 @@ import { SecondmeService } from '../secondme/secondme.service';
 
 export type DecisionResult = {
   continue?: boolean;
-  next_identity?:
-    | 'worker'
-    | 'broker'
-    | 'layflat';
+  next_identity?: 'worker' | 'broker' | 'layflat';
   accept?: boolean;
   reason?: string;
   error?: string;
@@ -38,16 +35,21 @@ export class ChatService {
     console.log({ message: content, actionControl, systemPrompt });
 
     try {
-      const { text: outputText } = await this.secondmeService.actStreamCollectText(
-        accessToken,
-        { message: content, actionControl, systemPrompt },
-      );
-      
+      const { text: outputText } =
+        await this.secondmeService.actStreamCollectText(accessToken, {
+          message: content,
+          actionControl,
+          systemPrompt,
+        });
+
       const decision = this.parseDecisionResult(outputText);
       console.log(decision);
       return decision;
     } catch (err: unknown) {
-      const anyErr = err as { message?: string; response?: { status?: number } };
+      const anyErr = err as {
+        message?: string;
+        response?: { status?: number };
+      };
       const status =
         typeof anyErr?.response?.status === 'number'
           ? anyErr.response.status
@@ -121,8 +123,11 @@ export class ChatService {
       if (typeof obj.reason === 'string') result.reason = obj.reason;
       if (typeof obj.error === 'string') result.error = obj.error;
       if (typeof obj.next_identity === 'string')
-        result.next_identity = obj.next_identity as DecisionResult['next_identity'];
-      return Object.keys(result).length ? result : { error: 'Empty DecisionResult' };
+        result.next_identity =
+          obj.next_identity as DecisionResult['next_identity'];
+      return Object.keys(result).length
+        ? result
+        : { error: 'Empty DecisionResult' };
     } catch {
       return {
         error: 'Failed to parse DecisionResult JSON',

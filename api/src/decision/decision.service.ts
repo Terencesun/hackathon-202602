@@ -101,7 +101,7 @@ export class AgentDecisionService {
     }
   }
 
-  async processInviteBind(agent: Agent, tickNumber: number): Promise<void> {
+  async processInviteBind(agent: Agent, _tickNumber: number): Promise<void> {
     if (agent.identity !== AgentIdentity.BROKER) return;
 
     const candidates = await this.agentsService.getLatestActiveLayflatAgents(5);
@@ -118,10 +118,15 @@ export class AgentDecisionService {
       );
       const ecoStatus = `资产能覆盖${tickCoverage}个tick`;
 
-      const targetInterests = target.interestTags ? target.interestTags.join(',') : '';
+      const targetInterests = target.interestTags
+        ? target.interestTags.join(',')
+        : '';
       const prompt = `你是一个在模拟制造业系统中的AI Agent。你收到来自中介（broker）${agent.id}的打工邀请，决定是否接受邀请并与其建立绑定关系。你的当前状态：收入${target.currentIncome}元，兴趣标签：${targetInterests}，经济状态：${ecoStatus}。决定是否接受邀请。`;
 
-      let decision: DecisionResult = { accept: false, reason: 'default reject' };
+      let decision: DecisionResult = {
+        accept: false,
+        reason: 'default reject',
+      };
       try {
         decision = await this.chatService.sendChat(target.id, prompt);
       } catch {
@@ -144,7 +149,9 @@ export class AgentDecisionService {
   }
 
   private calcTickCoverageFromAssets(totalAssets: number): number {
-    const livingCosts = this.economyService.getLivingCosts(AgentIdentity.LAYFLAT);
+    const livingCosts = this.economyService.getLivingCosts(
+      AgentIdentity.LAYFLAT,
+    );
     const costPerTick = Object.values(livingCosts).reduce((sum, v) => {
       const n = typeof v === 'number' ? v : Number(v);
       return Number.isFinite(n) ? sum + n : sum;
