@@ -8,6 +8,7 @@ type BrokerWorkerBindingRow = {
   id: string;
   broker_agent_id: string;
   worker_agent_id: string;
+  start_tick: number | string | null;
   decision_reason: string | null;
   created_at: string | null;
 };
@@ -47,6 +48,10 @@ export class BrokerBindingsService {
       .maybeSingle();
     throwIfSupabaseError(res.error, 'brokerBindings.findLatestByWorkerAgentId');
     const row = res.data as BrokerWorkerBindingRow | null;
+    const startTick =
+      row?.start_tick === null || row?.start_tick === undefined
+        ? null
+        : Number(row.start_tick);
     return row
       ? {
           id: row.id,
@@ -54,6 +59,7 @@ export class BrokerBindingsService {
           brokerAgent: null,
           workerAgentId: row.worker_agent_id,
           workerAgent: null,
+          startTick: Number.isFinite(startTick) ? startTick : null,
           decisionReason: row.decision_reason ?? null,
           createdAt: row.created_at ? new Date(row.created_at) : null,
         }
@@ -63,6 +69,7 @@ export class BrokerBindingsService {
   async createBinding(params: {
     brokerAgentId: string;
     workerAgentId: string;
+    startTick: number;
     decisionReason?: string | null;
   }): Promise<BrokerWorkerBinding | null> {
     const res = await this.supabase
@@ -70,6 +77,7 @@ export class BrokerBindingsService {
       .insert({
         broker_agent_id: params.brokerAgentId,
         worker_agent_id: params.workerAgentId,
+        start_tick: params.startTick,
         decision_reason: params.decisionReason ?? null,
       })
       .select('*')
@@ -82,6 +90,10 @@ export class BrokerBindingsService {
     }
 
     const row = res.data as BrokerWorkerBindingRow | null;
+    const startTick =
+      row?.start_tick === null || row?.start_tick === undefined
+        ? null
+        : Number(row.start_tick);
     return row
       ? {
           id: row.id,
@@ -89,6 +101,7 @@ export class BrokerBindingsService {
           brokerAgent: null,
           workerAgentId: row.worker_agent_id,
           workerAgent: null,
+          startTick: Number.isFinite(startTick) ? startTick : null,
           decisionReason: row.decision_reason ?? null,
           createdAt: row.created_at ? new Date(row.created_at) : null,
         }

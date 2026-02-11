@@ -10,6 +10,7 @@ import {
   type AgentIncomeIdentity,
 } from '../economy/income.service';
 import { Agent, AgentIdentity } from '../agents/agent.entity';
+import { BrokerBindingsService } from '../broker-bindings/broker-bindings.service';
 import { SUPABASE_CLIENT } from '../supabase/supabase.constants';
 import { throwIfSupabaseError } from '../supabase/supabase.errors';
 import { from, of, lastValueFrom } from 'rxjs';
@@ -24,6 +25,8 @@ export class TickService {
   private readonly logger = new Logger(TickService.name);
   private currentTick = 0;
   private isProcessingTick = false;
+  private readonly brokerBindingCommissionTicks = 24 * 30;
+  private readonly brokerBindingCommissionRate = 0.1;
 
   constructor(
     @Inject(SUPABASE_CLIENT)
@@ -33,6 +36,7 @@ export class TickService {
     private decisionService: AgentDecisionService,
     private economyService: EconomyService,
     private incomeService: IncomeService,
+    private brokerBindingsService: BrokerBindingsService,
   ) {}
 
   private async ensureSystemRowExists(): Promise<void> {
@@ -121,6 +125,22 @@ export class TickService {
       );
     }
 
+    let brokerBinding =
+      agent.identity === AgentIdentity.WORKER
+        ? await this.brokerBindingsService.findLatestByWorkerAgentId(agent.id)
+        : null;
+    if (brokerBinding) {
+      const startTick = brokerBinding.startTick;
+      if (
+        startTick !== null &&
+        Number.isFinite(startTick) &&
+        this.currentTick - startTick >= this.brokerBindingCommissionTicks
+      ) {
+        await this.brokerBindingsService.removeRelFromWorker(agent.id);
+        brokerBinding = null;
+      }
+    }
+
     const incomeItems = this.incomeService.applyIncom({
       identity: agent.identity as unknown as AgentIncomeIdentity,
       totalAgents,
@@ -130,6 +150,42 @@ export class TickService {
       invitesInCurrentDay: 0,
       successfulDirectInviteeFirstMonthWages: [],
     });
+
+    if (brokerBinding) {
+      const startTick = brokerBinding.startTick;
+      const elapsedTicks =
+        startTick !== null && Number.isFinite(startTick)
+          ? this.currentTick - startTick
+          : null;
+      if (
+        elapsedTicks !== null &&
+        elapsedTicks >= 0 &&
+        elapsedTicks < this.brokerBindingCommissionTicks
+      ) {
+        const wage = incomeItems.find((i) => i.type === 'worker_income')?.amount;
+        const safeWage = Number.isFinite(wage) ? Number(wage) : 0;
+        const commission = Number(
+          (Math.max(0, safeWage) * this.brokerBindingCommissionRate).toFixed(2),
+        );
+        if (commission > 0) {
+          await this.transactionsService.createTransaction(
+            agent.id,
+            'worker_cost_broker_commission',
+            -commission,
+            '中介抽成',
+            this.currentTick,
+          );
+          await this.transactionsService.createTransaction(
+            brokerBinding.brokerAgentId,
+            'broker_income_worker_commission',
+            commission,
+            '工人佣金抽成',
+            this.currentTick,
+          );
+        }
+      }
+    }
+
     for (const item of incomeItems) {
       if (item.amount === 0) continue;
       await this.transactionsService.createTransaction(

@@ -444,6 +444,7 @@ describe('AgentDecisionService', () => {
       expect(brokerBindingsService.createBinding).toHaveBeenCalledWith({
         brokerAgentId: 'broker-1',
         workerAgentId: 'w1',
+        startTick: 1,
         decisionReason: '想赚钱',
       });
       expect(agentsService.update).toHaveBeenCalledWith('w1', {

@@ -8,6 +8,7 @@ import { EconomyService } from '../economy/economy.service';
 import { IncomeService } from '../economy/income.service';
 import type { SystemStats } from '../economy/economy.service';
 import { Agent, AgentIdentity } from '../agents/agent.entity';
+import { BrokerBindingsService } from '../broker-bindings/broker-bindings.service';
 
 describe('TickService', () => {
   let svc: TickService;
@@ -32,6 +33,10 @@ describe('TickService', () => {
   };
   const incomeService = {
     applyIncom: jest.fn(),
+  };
+  const brokerBindingsService = {
+    findLatestByWorkerAgentId: jest.fn(),
+    removeRelFromWorker: jest.fn(),
   };
 
   const makeAgent = (partial: Partial<Agent>): Agent =>
@@ -68,6 +73,8 @@ describe('TickService', () => {
     decisionService.processRegularThinking.mockResolvedValue(undefined);
     decisionService.processRoleChange.mockResolvedValue(undefined);
     incomeService.applyIncom.mockReturnValue([]);
+    brokerBindingsService.findLatestByWorkerAgentId.mockResolvedValue(null);
+    brokerBindingsService.removeRelFromWorker.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -78,6 +85,7 @@ describe('TickService', () => {
         { provide: AgentDecisionService, useValue: decisionService },
         { provide: EconomyService, useValue: economyService },
         { provide: IncomeService, useValue: incomeService },
+        { provide: BrokerBindingsService, useValue: brokerBindingsService },
       ],
     }).compile();
 

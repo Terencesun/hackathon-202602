@@ -70,6 +70,7 @@ create table if not exists public.broker_worker_bindings (
   id uuid primary key default gen_random_uuid(),
   broker_agent_id uuid not null references public.agents(id) on delete cascade,
   worker_agent_id uuid not null references public.agents(id) on delete cascade,
+  start_tick int not null default 0,
   decision_reason text null,
   created_at timestamptz not null default now(),
   constraint broker_worker_bindings_unique unique (broker_agent_id, worker_agent_id)

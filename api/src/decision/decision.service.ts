@@ -101,7 +101,7 @@ export class AgentDecisionService {
     }
   }
 
-  async processInviteBind(agent: Agent, _tickNumber: number): Promise<void> {
+  async processInviteBind(agent: Agent, tickNumber: number): Promise<void> {
     if (agent.identity !== AgentIdentity.BROKER) return;
 
     const candidates = await this.agentsService.getLatestActiveLayflatAgents(5);
@@ -138,6 +138,7 @@ export class AgentDecisionService {
       const inserted = await this.brokerBindingsService.createBinding({
         brokerAgentId: agent.id,
         workerAgentId: target.id,
+        startTick: tickNumber,
         decisionReason: decision.reason ?? null,
       });
       if (!inserted) continue;

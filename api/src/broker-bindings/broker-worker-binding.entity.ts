@@ -6,6 +6,7 @@ export class BrokerWorkerBinding {
   brokerAgent: Agent | null;
   workerAgentId: string;
   workerAgent: Agent | null;
+  startTick: number | null;
   decisionReason: string | null;
   createdAt: Date | null;
 }
