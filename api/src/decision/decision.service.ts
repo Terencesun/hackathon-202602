@@ -17,6 +17,28 @@ export class AgentDecisionService {
     private brokerBindingsService: BrokerBindingsService,
   ) {}
 
+  async processRoleChange(
+    agentId: string,
+    oldRole: AgentIdentity,
+    newRole: AgentIdentity,
+  ): Promise<void> {
+    if (oldRole === newRole) return;
+
+    if (
+      oldRole === AgentIdentity.WORKER &&
+      (newRole === AgentIdentity.BROKER || newRole === AgentIdentity.LAYFLAT)
+    ) {
+      await this.brokerBindingsService.removeRelFromWorker(agentId);
+    }
+
+    if (
+      oldRole === AgentIdentity.BROKER &&
+      (newRole === AgentIdentity.WORKER || newRole === AgentIdentity.LAYFLAT)
+    ) {
+      await this.brokerBindingsService.removeRelFromBroker(agentId);
+    }
+  }
+
   async processRegularThinking(
     agent: Agent,
     tickNumber: number,

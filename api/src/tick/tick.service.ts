@@ -104,6 +104,8 @@ export class TickService {
 
     for (const agent of agents) {
       try {
+        const oldRole = agent.identity;
+
         // 1. 扣除生活成本。
         const costs = this.economyService.getLivingCosts(agent.identity);
         for (const [type, amount] of Object.entries(costs)) {
@@ -133,6 +135,16 @@ export class TickService {
           await this.decisionService.processRegularThinking(
             agent,
             this.currentTick,
+          );
+        }
+
+        // 3. 中介关系处理
+        const latestAgent = await this.agentsService.findOne(agent.id);
+        if (latestAgent && latestAgent.identity) {
+          await this.decisionService.processRoleChange(
+            agent.id,
+            oldRole,
+            latestAgent.identity,
           );
         }
 

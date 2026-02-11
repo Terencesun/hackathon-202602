@@ -19,6 +19,22 @@ export class BrokerBindingsService {
     private readonly supabase: SupabaseClient,
   ) {}
 
+  async removeRelFromWorker(workerAgentId: string): Promise<void> {
+    const res = await this.supabase
+      .from('broker_worker_bindings')
+      .delete()
+      .eq('worker_agent_id', workerAgentId);
+    throwIfSupabaseError(res.error, 'brokerBindings.removeRelFromWorker');
+  }
+
+  async removeRelFromBroker(brokerAgentId: string): Promise<void> {
+    const res = await this.supabase
+      .from('broker_worker_bindings')
+      .delete()
+      .eq('broker_agent_id', brokerAgentId);
+    throwIfSupabaseError(res.error, 'brokerBindings.removeRelFromBroker');
+  }
+
   async findLatestByWorkerAgentId(
     workerAgentId: string,
   ): Promise<BrokerWorkerBinding | null> {
