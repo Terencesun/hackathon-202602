@@ -1,6 +1,6 @@
 FROM node:22.20.0-slim AS builder
 
-WORKDIR /app
+WORKDIR /
 
 RUN ls
 
