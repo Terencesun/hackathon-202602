@@ -20,8 +20,8 @@ export async function hydrateSession(userStore: {
   user: any;
   setProfile: (u: any, a: any) => void;
   clearSession: () => void;
-}) {
-  if (userStore.user) return true;
+}, options?: { force?: boolean }) {
+  if (!options?.force && userStore.user) return true;
   if (inFlight) return inFlight;
 
   inFlight = (async () => {

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { stopSessionPolling } from '../lib/sessionPolling';
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<any>(null);
@@ -13,6 +14,7 @@ export const useUserStore = defineStore('user', () => {
   function clearSession() {
     user.value = null;
     agent.value = null;
+    stopSessionPolling();
   }
 
   return { user, agent, setProfile, clearSession };

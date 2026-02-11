@@ -5,6 +5,7 @@ import Dashboard from '../views/Dashboard.vue';
 import Rank from '../views/Rank.vue';
 import { useUserStore } from '../stores/user';
 import { hydrateSession } from '../lib/session';
+import { startSessionPolling } from '../lib/sessionPolling';
 
 const routes = [
   { path: '/', component: Login },
@@ -24,6 +25,16 @@ router.beforeEach(async (to) => {
   if (to.meta.requiresAuth && !userStore.user) {
     await hydrateSession(userStore);
     if (!userStore.user) return '/';
+  }
+
+  if (to.meta.requiresAuth && userStore.user) {
+    startSessionPolling({
+      intervalMs: 5000,
+      isLoggedIn: () => !!userStore.user,
+      poll: async () => {
+        await hydrateSession(userStore, { force: true });
+      },
+    });
   }
   return true;
 });
