@@ -46,19 +46,24 @@ const incomeFontSize = computed(() => {
         
         <!-- Text Info -->
         <div class="text-center w-full px-1">
-          <div class="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-1">Current Wealth</div>
-          <div class="font-mono font-bold text-green-400 truncate w-full flex justify-center items-baseline" :title="agent?.currentIncome?.toFixed(2)">
-             <span class="text-lg mr-1 opacity-80">¥</span>
-             <span :class="[incomeFontSize, 'tracking-tight transition-all duration-300']">
-               {{ agent?.currentIncome?.toFixed(2) ?? '0.00' }}
-             </span>
+          <div class="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-1">
+            Current Wealth
+          </div>
+          <div
+            class="font-mono font-bold text-green-400 truncate w-full flex justify-center items-baseline"
+            :title="agent?.currentIncome?.toFixed(2)"
+          >
+            <span class="text-lg mr-1 opacity-80">¥</span>
+            <span :class="[incomeFontSize, 'tracking-tight transition-all duration-300']">
+              {{ agent?.currentIncome?.toFixed(2) ?? '0.00' }}
+            </span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Background Decoration -->
-    <div class="absolute -bottom-10 -right-10 w-24 h-24 bg-green-500/5 blur-[40px] rounded-full pointer-events-none"></div>
-    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/20 pointer-events-none"></div>
+    <div class="absolute -bottom-10 -right-10 w-24 h-24 bg-green-500/5 blur-[40px] rounded-full pointer-events-none" />
+    <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/20 pointer-events-none" />
   </div>
 </template>

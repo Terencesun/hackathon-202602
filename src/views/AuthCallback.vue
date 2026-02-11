@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, h } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '../api/client';
 import { useUserStore } from '../stores/user';
 import { ElMessage } from 'element-plus';
+import { Loading } from '@element-plus/icons-vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -39,10 +40,14 @@ onMounted(async () => {
     });
 
     userStore.setProfile(data.user, data.agent);
-    ElMessage.success('Login successful');
+    ElMessage({
+      message: 'Loading...',
+      icon: h(Loading, { style: 'animation: rotating 2s linear infinite' }),
+      type: 'success',
+    });
     router.push('/dashboard');
   } catch (error) {
-    ElMessage.error('登录失败');
+    ElMessage.error('(>_<) 认证失败');
     router.push('/');
   }
 });

@@ -46,18 +46,6 @@ create table if not exists public.transactions (
 
 create index if not exists idx_transactions_agent_id on public.transactions(agent_id);
 
-create table if not exists public.income_records (
-  id uuid primary key default gen_random_uuid(),
-  agent_id uuid not null references public.agents(id) on delete cascade,
-  income_type text not null,
-  amount numeric(10,2) not null,
-  metadata jsonb not null default '{}'::jsonb,
-  tick_number int not null,
-  created_at timestamptz not null default now()
-);
-
-create index if not exists idx_income_records_agent_id on public.income_records(agent_id);
-
 create table if not exists public.broker_worker_bindings (
   id uuid primary key default gen_random_uuid(),
   broker_agent_id uuid not null references public.agents(id) on delete cascade,
