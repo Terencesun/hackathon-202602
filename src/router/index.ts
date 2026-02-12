@@ -20,9 +20,16 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const userStore = useUserStore();
 
-  if (to.meta.requiresAuth && !userStore.user) {
+  if (!userStore.user) {
     await hydrateSession(userStore);
-    if (!userStore.user) return '/';
+  }
+
+  if (to.path === '/' && userStore.user) {
+    return '/dashboard';
+  }
+
+  if (to.meta.requiresAuth && !userStore.user) {
+    return '/';
   }
 
   if (to.meta.requiresAuth && userStore.user) {
