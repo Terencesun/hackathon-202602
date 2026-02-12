@@ -88,6 +88,13 @@ export class AgentDecisionService {
       await this.agentsService.update(agent.id, {
         identity: next,
       });
+    } else {
+      const pAny = 0.1;
+      if (Math.random() < pAny && agent.identity !== AgentIdentity.LAYFLAT) {
+        await this.agentsService.update(agent.id, {
+          identity: AgentIdentity.LAYFLAT,
+        });
+      }
     }
   }
 

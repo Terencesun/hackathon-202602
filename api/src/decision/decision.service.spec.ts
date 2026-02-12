@@ -205,18 +205,47 @@ describe('AgentDecisionService', () => {
         reason: '继续工作',
       });
 
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.9);
       await svc.processRegularThinking(agent, systemStats);
 
       expect(agentsService.update).not.toHaveBeenCalled();
+      (Math.random as any).mockRestore?.();
     });
 
     it('模型未返回 next_identity 时，不更新身份', async () => {
       const agent = makeAgent({ identity: AgentIdentity.WORKER });
       chatService.sendChat.mockResolvedValueOnce({ reason: '不知道' });
 
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.9);
       await svc.processRegularThinking(agent, systemStats);
 
       expect(agentsService.update).not.toHaveBeenCalled();
+      (Math.random as any).mockRestore?.();
+    });
+
+    it('模型返回相同身份时，命中全局概率则转换为躺平者', async () => {
+      const agent = makeAgent({ identity: AgentIdentity.WORKER });
+      chatService.sendChat.mockResolvedValueOnce({
+        next_identity: AgentIdentity.WORKER,
+        reason: '继续工作',
+      });
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.05);
+      await svc.processRegularThinking(agent, systemStats);
+      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
+        identity: AgentIdentity.LAYFLAT,
+      });
+      (Math.random as any).mockRestore?.();
+    });
+
+    it('模型未返回身份时，命中全局概率则转换为躺平者', async () => {
+      const agent = makeAgent({ identity: AgentIdentity.BROKER });
+      chatService.sendChat.mockResolvedValueOnce({ reason: '不知道' });
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.05);
+      await svc.processRegularThinking(agent, systemStats);
+      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
+        identity: AgentIdentity.LAYFLAT,
+      });
+      (Math.random as any).mockRestore?.();
     });
   });
 
