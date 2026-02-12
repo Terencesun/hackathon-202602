@@ -55,8 +55,14 @@ export async function getRank(limit = 50) {
   return data;
 }
 
-export async function getMe() {
-  const { data } = await apiClient.post<AgentMeResponse>('/agent/me');
+export async function getMe(options?: { skipAuthRedirect?: boolean }) {
+  const { data } = await apiClient.post<AgentMeResponse>(
+    '/agent/me',
+    {},
+    {
+      skipAuthRedirect: options?.skipAuthRedirect,
+    } as any,
+  );
   return data;
 }
 
@@ -71,6 +77,10 @@ apiClient.interceptors.response.use(
     const status = error?.response?.status;
     const config = error?.config;
     const url: string | undefined = config?.url;
+
+    if (config?.skipAuthRedirect) {
+      return Promise.reject(error);
+    }
 
     if (
       (status === 401 || status === 403) &&

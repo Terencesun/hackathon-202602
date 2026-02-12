@@ -12,7 +12,7 @@ export async function hydrateSession(userStore: {
 
   inFlight = (async () => {
     try {
-      const data = await getMe();
+      const data = await getMe({ skipAuthRedirect: true });
       userStore.setProfile(
         {
           id: data.user?.id,
