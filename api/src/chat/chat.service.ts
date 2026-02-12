@@ -75,7 +75,7 @@ export class ChatService {
   }
 
   private buildActionControl(content: string): string | null {
-    if (content.includes('决定是否继续当前身份')) {
+    if (content.includes('确定你当前的职业身份')) {
       return [
         '仅输出合法 JSON 对象，不要解释，不要输出 Markdown 或代码块。',
         '输出结构示例：{"next_identity": string,"reason": string}。',
@@ -85,7 +85,7 @@ export class ChatService {
       ].join('\n');
     }
 
-    if (content.includes('决定是否接受邀请')) {
+    if (content.includes('中介建立绑定关系')) {
       return [
         '仅输出合法 JSON 对象，不要解释，不要输出 Markdown 或代码块。',
         '输出结构示例：{"accept": boolean, "reason": string}。',

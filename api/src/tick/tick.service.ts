@@ -198,7 +198,11 @@ export class TickService {
     }
 
     if (agent.identity === AgentIdentity.BROKER) {
-      await this.decisionService.processInviteBind(agent, this.currentTick);
+      await this.decisionService.processInviteBind(
+        agent,
+        this.currentTick,
+        systemStats,
+      );
     }
 
     await this.decisionService.processRegularThinking(agent, systemStats);

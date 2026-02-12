@@ -217,7 +217,11 @@ describe('TickService', () => {
 
       await (svc as any).processTickHandle(agent, 1, 0, systemStats);
 
-      expect(decisionService.processInviteBind).toHaveBeenCalledWith(agent, 1);
+      expect(decisionService.processInviteBind).toHaveBeenCalledWith(
+        agent,
+        1,
+        systemStats,
+      );
       expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
         systemStats,
@@ -359,7 +363,11 @@ describe('TickService', () => {
 
       await svc.processTick();
 
-      expect(decisionService.processInviteBind).toHaveBeenCalledWith(agent, 1);
+      expect(decisionService.processInviteBind).toHaveBeenCalledWith(
+        agent,
+        1,
+        systemStats,
+      );
       expect(decisionService.processRegularThinking).toHaveBeenCalledWith(
         agent,
         systemStats,

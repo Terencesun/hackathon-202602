@@ -42,21 +42,25 @@ export class AgentDecisionService {
     agent: Agent,
     systemStats: SystemStats,
   ): Promise<void> {
-    const interests = agent.interestTags ? agent.interestTags.join(',') : '';
     const tickCoverage = this.calcTickCoverageFromAssets(
       Number(agent.currentIncome),
     );
     const ecoStatus = `资产能覆盖${tickCoverage}个tick`;
 
     const prompt = [
-      `你是一个在模拟制造业系统中的AI Agent，当前身份是${agent.identity}，你需要根据当前状态和个人兴趣标签决定是否继续当前身份。`,
-      `经济状态：${ecoStatus}。兴趣标签：${interests}。`,
-      `总Agent数${systemStats.total_agents}，工人比例${systemStats.worker_ratio}，中介比例${systemStats.broker_ratio}，躺平者比例${systemStats.layflat_ratio}`,
-      `你需要结合你的经济情况和兴趣，来决定是否去打工，打工和做中介某种程度上会优化你的经济情况。`,
-      `打工仔和中介的区别在于，中介风险高但可能收益更好，打工仔相对稳定但收益有限。`,
-      `当经济情况不乐观的时候，请记住，你要活下去。`,
-      `当经济情况乐观的时候，请记住，休息和娱乐也是重要的。`,
-      `回答的时候，你的原因请围绕你个人情况来作答。`,
+      // 1. 核心身份
+      `你是一个运行在制造业模拟系统中的AI Agent，你的核心身份为：${agent.identity}。`,
+      // 2. 核心任务
+      `你的核心任务：基于自身身份、当前经济状态、系统整体数据和个人兴趣，从「打工仔」「中介」「躺平者」三种类型中选择并确定你当前的职业身份。`,
+      // 3. 关键决策依据
+      `=== 决策参考信息 ===`,
+      `1. 个人经济状态：${ecoStatus}`,
+      `2. 系统整体数据：总Agent数量${systemStats.total_agents}，工人比例${systemStats.worker_ratio}，中介比例${systemStats.broker_ratio}，躺平者比例${systemStats.layflat_ratio}`,
+      // 4. 决策规则
+      `=== 决策核心规则 ===`,
+      `1. 打工仔相关：工人比例越高，单位工价越低，此时选择打工的收益可能低于躺平或做中介；`,
+      `2. 职业差异：打工仔收益稳定但上限低，中介收益潜力高但风险大，躺平者无主动收益但也无风险；`,
+      `3. 生存与发展原则：经济状态不乐观时，优先以「活下去」为核心目标；经济状态乐观时，可兼顾休息、娱乐等非收益性需求。`,
     ].join('\n');
 
     const decision: DecisionResult = await this.chatService.sendChat(
@@ -75,7 +79,11 @@ export class AgentDecisionService {
     }
   }
 
-  async processInviteBind(agent: Agent, tickNumber: number): Promise<void> {
+  async processInviteBind(
+    agent: Agent,
+    tickNumber: number,
+    systemStats: SystemStats,
+  ): Promise<void> {
     if (agent.identity !== AgentIdentity.BROKER) return;
 
     const candidates = await this.agentsService.getLatestActiveLayflatAgents(5);
@@ -92,18 +100,22 @@ export class AgentDecisionService {
       );
       const ecoStatus = `资产能覆盖${tickCoverage}个tick`;
 
-      const targetInterests = target.interestTags
-        ? target.interestTags.join(',')
-        : '';
       const prompt = [
-        `你是一个在模拟制造业系统中的AI Agent。`,
-        `你收到来自中介（broker）${agent.id}的打工邀请，决定是否接受邀请并与其建立绑定关系。`,
-        `你的当前状态：收入${target.currentIncome}元，兴趣标签：${targetInterests}，经济状态：${ecoStatus}。`,
-        `你需要结合你的经济情况和兴趣，来决定是否去打工，打工和做中介某种程度上会优化你的经济情况。`,
-        `当经济情况不乐观的时候，请记住，你要活下去`,
-        `当经济情况乐观的时候，请记住，休息和娱乐也是重要的。`,
-        `回答的时候，你的原因请围绕你个人情况来作答。`,
-        `决定是否接受邀请。`,
+        // 1. 核心身份
+        `你是一个运行在制造业模拟系统中的AI Agent。`,
+        `当前场景：你收到来自ID为${agent.id}的中介（broker）发出的打工邀请，需要决定是否接受该邀请，并与该中介建立绑定关系。`,
+        // 2. 结构化呈现个人核心状态（决策依据）
+        `=== 关键决策依据 ===`,
+        `1. 当前收入：${target.currentIncome}元`,
+        `2. 经济状态：${ecoStatus}`,
+        `3. 系统整体数据：总Agent数量${systemStats.total_agents}，工人比例${systemStats.worker_ratio}，中介比例${systemStats.broker_ratio}，躺平者比例${systemStats.layflat_ratio}`,
+        // 3. 清晰的决策规则与核心原则
+        `=== 决策核心规则 ===`,
+        `1. 决策维度：必须结合你的「经济情况」（收入+经济状态）和「个人兴趣」综合判断；`,
+        `2. 收益逻辑：接受打工邀请或选择成为中介，在一定程度上可优化你的经济状况；`,
+        `3. 优先级原则：
+            - 若经济状态不乐观：核心目标是「活下去」，需优先考虑能保障基本生存的选择；
+            - 若经济状态乐观：除经济收益外，需兼顾「休息和娱乐」等非收益性需求。`,
       ].join('\n');
 
       let decision: DecisionResult = {

@@ -10,6 +10,13 @@ import { BrokerBindingsService } from '../broker-bindings/broker-bindings.servic
 describe('AgentDecisionService', () => {
   let svc: AgentDecisionService;
 
+  const systemStats: SystemStats = {
+    total_agents: 10,
+    worker_ratio: 0.4,
+    broker_ratio: 0.2,
+    layflat_ratio: 0.4,
+  };
+
   const chatService = {
     sendChat: jest.fn<Promise<DecisionResult>, [string, string]>(),
   };
@@ -136,13 +143,6 @@ describe('AgentDecisionService', () => {
   });
 
   describe('processRegularThinking', () => {
-    const systemStats: SystemStats = {
-      total_agents: 10,
-      worker_ratio: 0.4,
-      broker_ratio: 0.2,
-      layflat_ratio: 0.4,
-    };
-
     it('模型返回不同的 next_identity 时，更新身份', async () => {
       const agent = makeAgent({
         identity: AgentIdentity.WORKER,
@@ -159,10 +159,10 @@ describe('AgentDecisionService', () => {
       expect(chatService.sendChat).toHaveBeenCalledTimes(1);
       expect(chatService.sendChat.mock.calls[0][0]).toBe(agent.id);
       expect(chatService.sendChat.mock.calls[0][1]).toContain(
-        '决定是否继续当前身份',
+        '你的核心任务：基于自身身份',
       );
       expect(chatService.sendChat.mock.calls[0][1]).toContain(
-        `总Agent数${systemStats.total_agents}`,
+        `总Agent数量${systemStats.total_agents}`,
       );
 
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
@@ -195,7 +195,7 @@ describe('AgentDecisionService', () => {
   describe('processInviteBind', () => {
     it('非中介身份不会发起邀请', async () => {
       const agent = makeAgent({ identity: AgentIdentity.WORKER });
-      await svc.processInviteBind(agent, 1);
+      await svc.processInviteBind(agent, 1, systemStats);
       expect(agentsService.getLatestActiveLayflatAgents).not.toHaveBeenCalled();
       expect(chatService.sendChat).not.toHaveBeenCalled();
       expect(brokerBindingsService.createBinding).not.toHaveBeenCalled();
@@ -223,7 +223,7 @@ describe('AgentDecisionService', () => {
         id: 'b1',
       } as any);
 
-      await svc.processInviteBind(broker, 1);
+      await svc.processInviteBind(broker, 1, systemStats);
 
       expect(
         brokerBindingsService.findLatestByWorkerAgentId,
@@ -255,7 +255,7 @@ describe('AgentDecisionService', () => {
       );
       chatService.sendChat.mockRejectedValueOnce(new Error('chat down'));
 
-      await svc.processInviteBind(broker, 1);
+      await svc.processInviteBind(broker, 1, systemStats);
 
       expect(brokerBindingsService.createBinding).not.toHaveBeenCalled();
       expect(agentsService.update).not.toHaveBeenCalled();
@@ -279,7 +279,7 @@ describe('AgentDecisionService', () => {
         reason: '不想上班',
       });
 
-      await svc.processInviteBind(broker, 1);
+      await svc.processInviteBind(broker, 1, systemStats);
 
       expect(brokerBindingsService.createBinding).not.toHaveBeenCalled();
       expect(agentsService.update).not.toHaveBeenCalled();
@@ -303,7 +303,7 @@ describe('AgentDecisionService', () => {
         error: '模型输出异常',
       });
 
-      await svc.processInviteBind(broker, 1);
+      await svc.processInviteBind(broker, 1, systemStats);
 
       expect(brokerBindingsService.createBinding).not.toHaveBeenCalled();
       expect(agentsService.update).not.toHaveBeenCalled();
@@ -328,7 +328,7 @@ describe('AgentDecisionService', () => {
       });
       brokerBindingsService.createBinding.mockResolvedValueOnce(null);
 
-      await svc.processInviteBind(broker, 1);
+      await svc.processInviteBind(broker, 1, systemStats);
 
       expect(brokerBindingsService.createBinding).toHaveBeenCalledTimes(1);
       expect(agentsService.update).not.toHaveBeenCalled();
@@ -355,7 +355,7 @@ describe('AgentDecisionService', () => {
         id: 'bind-1',
       });
 
-      await svc.processInviteBind(broker, 1);
+      await svc.processInviteBind(broker, 1, systemStats);
 
       expect(brokerBindingsService.createBinding).toHaveBeenCalledWith({
         brokerAgentId: 'broker-1',
