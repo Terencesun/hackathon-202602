@@ -162,12 +162,40 @@ describe('AgentDecisionService', () => {
         '你的核心任务：基于自身身份',
       );
       expect(chatService.sendChat.mock.calls[0][1]).toContain(
-        `总Agent数量${systemStats.total_agents}`,
+        `总Agent数量: ${systemStats.total_agents}`,
       );
 
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
         identity: AgentIdentity.LAYFLAT,
       });
+    });
+
+    it('next_identity 为 WORKER 且与当前身份不一致时，命中概率会改为 LAYFLAT', async () => {
+      const agent = makeAgent({ identity: AgentIdentity.BROKER });
+      chatService.sendChat.mockResolvedValueOnce({
+        next_identity: AgentIdentity.WORKER,
+        reason: '想赚钱',
+      });
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.1);
+      await svc.processRegularThinking(agent, systemStats);
+      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
+        identity: AgentIdentity.LAYFLAT,
+      });
+      (Math.random as any).mockRestore?.();
+    });
+
+    it('next_identity 为 WORKER 且与当前身份不一致时，未命中概率保持为 WORKER', async () => {
+      const agent = makeAgent({ identity: AgentIdentity.LAYFLAT });
+      chatService.sendChat.mockResolvedValueOnce({
+        next_identity: AgentIdentity.WORKER,
+        reason: '继续工作',
+      });
+      jest.spyOn(Math, 'random').mockReturnValueOnce(0.9);
+      await svc.processRegularThinking(agent, systemStats);
+      expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
+        identity: AgentIdentity.WORKER,
+      });
+      (Math.random as any).mockRestore?.();
     });
 
     it('模型返回相同的 next_identity 时，不更新身份', async () => {

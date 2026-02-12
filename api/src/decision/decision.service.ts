@@ -78,8 +78,15 @@ export class AgentDecisionService {
       decision.next_identity &&
       decision.next_identity !== agent.identity
     ) {
+      let next = decision.next_identity;
+      if (next === AgentIdentity.WORKER) {
+        const p = 0.3;
+        if (Math.random() < p) {
+          next = AgentIdentity.LAYFLAT;
+        }
+      }
       await this.agentsService.update(agent.id, {
-        identity: decision.next_identity,
+        identity: next,
       });
     }
   }
