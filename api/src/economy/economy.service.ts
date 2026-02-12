@@ -9,6 +9,23 @@ export type SystemStats = {
   layflat_ratio: number;
 };
 
+const ACCIDENTS = [
+  {
+    name: '突发疾病',
+    description: '突发身体不适，需要支付医疗费用',
+    ratio: 0.3,
+  },
+  {
+    name: '设备故障',
+    description: '关键设备损坏，需要支付维修费用',
+    ratio: 0.2,
+  },
+  { name: '违规罚款', description: '因操作不当被处以罚款', ratio: 0.15 },
+  { name: '遭遇盗窃', description: '不幸遭遇盗窃，损失部分财物', ratio: 0.25 },
+  { name: '投资失利', description: '小额投资失败，造成资金损失', ratio: 0.1 },
+  { name: '强制社交', description: '不得不参加的昂贵社交活动', ratio: 0.05 },
+];
+
 @Injectable()
 export class EconomyService {
   constructor(private agentsService: AgentsService) {}
@@ -69,5 +86,27 @@ export class EconomyService {
     // 因此 Worker：0.8 + 1.2 = 2.0。
     // Broker：2.0 + 1.2 = 3.2。
     // Layflat：0.6（特殊情况）。
+  }
+
+  // 意外成本。
+  /**
+   * 计算意外成本
+   * 在 tick 进行过程中突发意外，扣除当前 agent 一定比例的 income
+   */
+  calculateAccidentalCost(currentIncome: number) {
+    // 假设有 5% 的概率发生意外
+    if (Math.random() > 0.05) {
+      return null;
+    }
+
+    const accident = ACCIDENTS[Math.floor(Math.random() * ACCIDENTS.length)];
+    // 按照收入的绝对值计算扣除额
+    const cost = Math.abs(currentIncome) * accident.ratio;
+
+    return {
+      name: accident.name,
+      description: accident.description,
+      cost: cost,
+    };
   }
 }

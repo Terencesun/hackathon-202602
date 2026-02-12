@@ -124,6 +124,20 @@ export class TickService {
       );
     }
 
+    // 意外成本
+    const accidentalCost = this.economyService.calculateAccidentalCost(
+      agent.currentIncome,
+    );
+    if (accidentalCost) {
+      await this.transactionsService.createTransaction(
+        agent.id,
+        'accidental_cost',
+        -accidentalCost.cost,
+        accidentalCost.name,
+        this.currentTick,
+      );
+    }
+
     let brokerBinding =
       agent.identity === AgentIdentity.WORKER
         ? await this.brokerBindingsService.findLatestByWorkerAgentId(agent.id)

@@ -29,6 +29,7 @@ describe('TickService', () => {
   const economyService = {
     getSystemStats: jest.fn(),
     getLivingCosts: jest.fn(),
+    calculateAccidentalCost: jest.fn(),
   };
   const incomeService = {
     applyIncom: jest.fn(),
@@ -64,6 +65,7 @@ describe('TickService', () => {
     jest.clearAllMocks();
 
     economyService.getSystemStats.mockResolvedValue(systemStats);
+    economyService.calculateAccidentalCost.mockReturnValue(null);
     transactionsService.createTransaction.mockResolvedValue({} as any);
     agentsService.update.mockResolvedValue({} as any);
     decisionService.processInviteBind.mockResolvedValue(undefined);
@@ -246,6 +248,35 @@ describe('TickService', () => {
       expect(agentsService.update).toHaveBeenCalledWith(agent.id, {
         currentTick: 2,
       });
+    });
+
+    it('当发生意外时，会创建意外成本交易', async () => {
+      (svc as any).currentTick = 100;
+      const agent = makeAgent({
+        id: 'a1',
+        identity: AgentIdentity.WORKER,
+        currentIncome: 1000,
+      });
+
+      economyService.getLivingCosts.mockReturnValue({ rent: 0.8 });
+      // Mock accident
+      economyService.calculateAccidentalCost.mockReturnValue({
+        name: '突发疾病',
+        description: 'oops',
+        cost: 300,
+      });
+      agentsService.findOne.mockResolvedValue(agent);
+
+      await (svc as any).processTickHandle(agent, 10, 4, systemStats);
+
+      expect(economyService.calculateAccidentalCost).toHaveBeenCalledWith(1000);
+      expect(transactionsService.createTransaction).toHaveBeenCalledWith(
+        agent.id,
+        'accidental_cost',
+        -300,
+        '突发疾病',
+        100,
+      );
     });
   });
 
